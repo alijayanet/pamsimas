@@ -212,7 +212,12 @@ cd /var/www/pamsimas
 ### 6. Install dependency
 
 ```bash
-npm install --no-fund --no-audit
+rm -rf node_modules
+
+# Install tanpa menjalankan lifecycle scripts dependency (menghindari error "husky: not found")
+npm install --no-fund --no-audit --ignore-scripts
+
+# Pastikan modul native terbangun (better-sqlite3)
 npm rebuild better-sqlite3 --verbose
 ```
 
@@ -298,7 +303,7 @@ sudo certbot --nginx -d domain-anda.com -d www.domain-anda.com
 ```bash
 cd /var/www/pamsimas
 git pull origin main
-npm install --no-fund --no-audit
+npm install --no-fund --no-audit --ignore-scripts
 npm rebuild better-sqlite3 --verbose
 pm2 restart pamsimas
 ```
