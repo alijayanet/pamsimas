@@ -1,0 +1,17 @@
+<%- include('../partials/admin-header', { title, activeMenu: 'pelanggan' }) %>
+
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <div class="card text-center">
+      <div class="card-body">
+        <h4 class="mb-1"><%= pelanggan.nama %></h4>
+        <p class="text-muted mb-3">No. Meter: <%= pelanggan.no_meteran %></p>
+        <img src="<%= qrDataUrl %>" alt="QR Pelanggan" class="img-fluid mb-3" style="max-width: 280px;">
+        <p class="small text-muted"><%= qrValue %></p>
+        <button onclick="window.print()" class="btn btn-primary">Cetak Kartu / QR</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/admin-footer') %>

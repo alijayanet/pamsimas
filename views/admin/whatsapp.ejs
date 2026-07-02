@@ -1,0 +1,82 @@
+<%- include('../partials/admin-header', { title, activeMenu: 'whatsapp' }) %>
+
+<div class="row">
+  <div class="col-lg-5">
+    <div class="card">
+      <div class="card-header"><h3 class="card-title">Status Koneksi</h3></div>
+      <div class="card-body text-center">
+        <p class="mb-2">Status: <strong><%= whatsapp.status %></strong></p>
+        <% if (whatsapp.connectedNumber) { %>
+          <p class="text-muted"><%= whatsapp.connectedNumber %></p>
+        <% } %>
+        <% if (whatsapp.qrDataUrl) { %>
+          <img src="<%= whatsapp.qrDataUrl %>" alt="QR WhatsApp" class="img-fluid mb-3" style="max-width: 280px;">
+          <p class="small text-muted">Scan QR ini dari WhatsApp server PAMSIMAS.</p>
+        <% } else { %>
+          <p class="text-muted">QR akan muncul saat koneksi membutuhkan scan ulang.</p>
+        <% } %>
+        <% if (whatsapp.lastError) { %>
+          <div class="alert alert-warning text-left"><%= whatsapp.lastError %></div>
+        <% } %>
+        <form action="/admin/whatsapp/connect" method="post">
+          <button type="submit" class="btn btn-success">Refresh Koneksi</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-7">
+    <div class="card card-success">
+      <div class="card-header"><h3 class="card-title">Broadcast Pengumuman</h3></div>
+      <div class="card-body">
+        <form action="/admin/whatsapp/broadcast" method="post">
+          <div class="form-group">
+            <label>Pesan Pengumuman</label>
+            <textarea name="pesan" class="form-control" rows="8" placeholder="Contoh: Air mati besok pukul 08.00 - 12.00 karena perbaikan pipa utama." required></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary">Kirim Broadcast</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-7">
+    <div class="card card-info">
+      <div class="card-header"><h3 class="card-title">Reminder QRIS Tagihan</h3></div>
+      <div class="card-body">
+        <form action="/admin/whatsapp/qris-reminder" method="post">
+          <div class="row">
+            <div class="col-md-6 form-group">
+              <label>Bulan</label>
+              <select name="bulan" class="form-control" required>
+                <% for (let b = 1; b <= 12; b++) { %>
+                  <option value="<%= b %>" <%= (new Date().getMonth() + 1) === b ? 'selected' : '' %>><%= b %></option>
+                <% } %>
+              </select>
+            </div>
+            <div class="col-md-6 form-group">
+              <label>Tahun</label>
+              <input type="number" name="tahun" class="form-control" value="<%= new Date().getFullYear() %>" required>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-info">Kirim Reminder QRIS</button>
+          <p class="small text-muted mt-2 mb-0">Mengirim pesan QRIS ke semua pelanggan yang tagihannya belum lunas pada periode tersebut.</p>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card card-secondary">
+      <div class="card-header"><h3 class="card-title">Test WhatsApp</h3></div>
+      <div class="card-body">
+        <form action="/admin/whatsapp/qris-test" method="post">
+          <button type="submit" class="btn btn-secondary btn-block">Kirim Pesan Test</button>
+        </form>
+        <p class="small text-muted mt-2 mb-0">Dikirim ke No. WhatsApp Admin QRIS, jika kosong maka ke No. WhatsApp Loket.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/admin-footer') %>

@@ -1,0 +1,94 @@
+<%- include('../partials/public-header', { title, bodyClass: 'pelanggan-app', containerClass: 'container pelanggan-shell' }) %>
+
+<div class="pelanggan-hero">
+  <div class="d-flex align-items-start">
+    <% if (appConfig?.logo_url) { %>
+      <img src="<%= appConfig.logo_url %>" alt="Logo" class="pelanggan-logo mr-3">
+    <% } %>
+    <div>
+      <div class="pelanggan-hero-muted mb-2">Riwayat Pembayaran</div>
+      <h3 class="mb-1"><%= pelanggan.nama %></h3>
+      <div class="pelanggan-hero-muted">Daftar semua tagihan dan status pembayarannya.</div>
+    </div>
+  </div>
+</div>
+
+<div class="pelanggan-card bg-white p-3 p-md-4">
+  <div class="pelanggan-section-title">Riwayat Tagihan</div>
+
+  <% if (!history.length) { %>
+    <div class="pelanggan-empty-state">
+      <h5 class="mb-2">Belum ada data tagihan</h5>
+      <div class="text-muted">Riwayat tagihan akan muncul setelah pencatatan meter dibuat.</div>
+    </div>
+  <% } else { %>
+    <% history.forEach((item) => { %>
+      <div class="pelanggan-list-item">
+        <div class="d-flex justify-content-between align-items-start flex-wrap mb-2">
+          <div>
+            <div class="font-weight-bold"><%= helpers.monthName(item.bulan) %> <%= item.tahun %></div>
+            <div class="text-muted small">
+              <%= item.total_kubik %> m3 • Dibayar <%= item.tgl_bayar ? helpers.formatDate(item.tgl_bayar) : '-' %>
+            </div>
+          </div>
+          <span class="pelanggan-pill <%= item.status_bayar === 'lunas' ? 'paid' : 'unpaid' %>">
+            <%= item.status_bayar === 'lunas' ? 'Lunas' : 'Belum Bayar' %>
+          </span>
+        </div>
+        <div class="d-flex justify-content-between align-items-center flex-wrap">
+          <div class="mb-2 mb-md-0">
+            <div class="small text-muted">Total</div>
+            <div class="h6 mb-0"><%= helpers.formatCurrency(item.total_tagihan) %></div>
+          </div>
+          <% if (item.status_bayar !== 'lunas') { %>
+            <a href="/pelanggan/tagihan/<%= item.id %>/qris" class="btn btn-success">Bayar Sekarang</a>
+          <% } %>
+        </div>
+        <div class="pelanggan-detail-grid">
+          <div class="pelanggan-detail-item">
+            <div class="pelanggan-detail-label">Kubik Ditagih</div>
+            <div class="pelanggan-detail-value"><%= item.detail_tagihan.kubikDitagihkan %> m3</div>
+          </div>
+          <div class="pelanggan-detail-item">
+            <div class="pelanggan-detail-label">Harga per m3</div>
+            <div class="pelanggan-detail-value"><%= helpers.formatCurrency(item.detail_tagihan.hargaPerKubik) %></div>
+          </div>
+          <div class="pelanggan-detail-item">
+            <div class="pelanggan-detail-label">Biaya Air</div>
+            <div class="pelanggan-detail-value"><%= helpers.formatCurrency(item.detail_tagihan.biayaAir) %></div>
+          </div>
+          <div class="pelanggan-detail-item">
+            <div class="pelanggan-detail-label">Biaya Admin</div>
+            <div class="pelanggan-detail-value"><%= helpers.formatCurrency(item.detail_tagihan.biayaAdmin) %></div>
+          </div>
+          <div class="pelanggan-detail-item">
+            <div class="pelanggan-detail-label">Denda</div>
+            <div class="pelanggan-detail-value"><%= helpers.formatCurrency(item.detail_tagihan.denda) %></div>
+          </div>
+          <div class="pelanggan-detail-item">
+            <div class="pelanggan-detail-label">Meter Awal - Akhir</div>
+            <div class="pelanggan-detail-value"><%= item.detail_tagihan.meterAwal %> - <%= item.detail_tagihan.meterAkhir %></div>
+          </div>
+          <div class="pelanggan-detail-item">
+            <div class="pelanggan-detail-label">Metode Bayar</div>
+            <div class="pelanggan-detail-value"><%= item.detail_tagihan.metodeBayar %></div>
+          </div>
+        </div>
+        <% if (item.detail_tagihan.abonemenApplied) { %>
+          <div class="alert alert-info mt-3 mb-0">Pemakaian bulan ini <strong><%= item.detail_tagihan.totalKubik %> m3</strong>, tetapi minimum abonement yang ditagih adalah <strong><%= item.detail_tagihan.kubikDitagihkan %> m3</strong>.</div>
+        <% } %>
+        <% if (item.foto_bukti) { %>
+          <div class="mt-3">
+            <a href="<%= item.foto_bukti %>" class="meter-photo-link" data-meter-preview data-title="Foto meter <%= item.bulan %>/<%= item.tahun %>">
+              <img src="<%= item.foto_bukti %>" alt="Foto meter <%= item.bulan %>/<%= item.tahun %>" class="meter-photo-thumb">
+            </a>
+            <div class="meter-photo-caption">Foto meter periode <%= helpers.monthName(item.bulan) %> <%= item.tahun %>.</div>
+          </div>
+        <% } %>
+      </div>
+    <% }) %>
+  <% } %>
+</div>
+
+<%- include('../partials/pelanggan-bottom-nav', { activeTab }) %>
+<%- include('../partials/public-footer') %>

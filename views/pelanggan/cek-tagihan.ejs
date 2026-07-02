@@ -1,0 +1,243 @@
+<%- include('../partials/public-header', { title }) %>
+
+<% const publicSearchResults = typeof searchResults !== 'undefined' && searchResults ? searchResults : []; %>
+
+<div class="row justify-content-center">
+  <div class="col-lg-9">
+    <div class="card lookup-card border-0 shadow-sm mb-4 no-print">
+      <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-start flex-wrap mb-3">
+          <div class="d-flex align-items-start">
+            <% if (appConfig?.logo_url) { %>
+              <img src="<%= appConfig.logo_url %>" alt="Logo" class="public-logo mr-3">
+            <% } %>
+            <div>
+            <h3 class="mb-1">Cek Tagihan PAMSIMAS</h3>
+            <div class="text-muted">Akses cepat tanpa login atau masuk ke dashboard pelanggan.</div>
+            </div>
+          </div>
+          <a href="/pelanggan/login" class="btn btn-outline-primary mt-3 mt-md-0">Login Pelanggan</a>
+        </div>
+        <form action="/pelanggan/cek" method="get">
+          <div class="input-group input-group-lg">
+            <input type="text" name="keyword" class="form-control" placeholder="Masukkan No Meter / Nama / No WhatsApp" value="<%= keyword %>" required>
+            <div class="input-group-append">
+              <button class="btn btn-primary" type="submit">Cek</button>
+            </div>
+          </div>
+        </form>
+        <div class="text-muted small mt-2">Untuk privasi, hasil pencarian berdasarkan nama akan menampilkan data sebagian.</div>
+      </div>
+    </div>
+
+    <% if (keyword && !pelanggan) { %>
+      <% if (publicSearchResults.length) { %>
+        <div class="card lookup-card border-0 shadow-sm mb-4 no-print">
+          <div class="card-body p-4">
+            <div class="h5 mb-2">Pilih Pelanggan</div>
+            <div class="text-muted mb-3">Ditemukan beberapa pelanggan. Klik untuk melihat tagihan.</div>
+            <div class="list-group">
+              <% publicSearchResults.forEach((item) => { %>
+                <a href="/pelanggan/cek?keyword=<%= encodeURIComponent(item.no_meteran) %>" class="list-group-item list-group-item-action">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                      <div class="font-weight-bold"><%= item.nama %></div>
+                      <div class="text-muted small">
+                        <%= helpers.maskMeter(item.no_meteran) %>
+                        • <%= helpers.truncate(item.alamat, 48) %>
+                      </div>
+                    </div>
+                    <span class="badge badge-primary">Cek</span>
+                  </div>
+                </a>
+              <% }) %>
+            </div>
+          </div>
+        </div>
+      <% } else { %>
+        <div class="alert alert-warning">Data pelanggan atau tagihan belum ditemukan.</div>
+      <% } %>
+    <% } %>
+
+    <% if (pelanggan && latestBill) { %>
+      <div class="invoice-print shadow-sm p-4 mb-4">
+        <div class="d-flex justify-content-between align-items-start flex-wrap mb-3">
+          <div>
+            <h4 class="mb-1"><%= pelanggan.nama %></h4>
+            <div class="text-muted">No Meter: <%= pelanggan.no_meteran %></div>
+            <div class="text-muted"><%= pelanggan.alamat %></div>
+          </div>
+          <div class="text-md-right mt-3 mt-md-0">
+            <button onclick="window.print()" class="btn btn-outline-primary no-print">Cetak Invoice</button>
+            <% if (qrisEnabled && latestBill.status_bayar !== 'lunas') { %>
+              <a href="/pelanggan/tagihan/<%= latestBill.id %>/qris?access_key=<%= encodeURIComponent(accessKey || '') %>" class="btn btn-success no-print mt-2 mt-md-0 ml-md-2">Bayar QRIS</a>
+            <% } %>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <div class="card border-0 bg-light h-100">
+              <div class="card-body">
+                <h5>Detail Pemakaian</h5>
+                <table class="table table-sm table-borderless mb-0">
+                  <tr><td>Periode</td><td class="text-right"><%= latestBill.bulan %>/<%= latestBill.tahun %></td></tr>
+                  <tr><td>Meter Awal</td><td class="text-right"><%= latestBill.meteran_awal %></td></tr>
+                  <tr><td>Meter Akhir</td><td class="text-right"><%= latestBill.meteran_akhir %></td></tr>
+                  <tr><td>Total Kubik</td><td class="text-right"><%= latestBill.total_kubik %> m3</td></tr>
+                  <tr><td>Kubik Ditagih</td><td class="text-right"><%= breakdown.kubikDitagihkan %> m3</td></tr>
+                  <tr><td>Minimum Abonement</td><td class="text-right"><%= breakdown.minimumPemakaianKubik %> m3</td></tr>
+                  <tr><td>Harga per Kubik</td><td class="text-right"><%= helpers.formatCurrency(breakdown.hargaPerKubik) %></td></tr>
+                  <tr><td>Biaya Air</td><td class="text-right"><%= helpers.formatCurrency(breakdown.biayaAir) %></td></tr>
+                  <tr><td>Biaya Admin</td><td class="text-right"><%= helpers.formatCurrency(breakdown.biayaAdmin) %></td></tr>
+                  <tr><td>Denda</td><td class="text-right"><%= helpers.formatCurrency(breakdown.denda) %></td></tr>
+                  <tr class="font-weight-bold"><td>Total</td><td class="text-right"><%= helpers.formatCurrency(latestBill.total_tagihan) %></td></tr>
+                  <tr><td>Status</td><td class="text-right"><span class="badge badge-<%= latestBill.status_bayar === 'lunas' ? 'success' : 'warning' %>"><%= latestBill.status_bayar %></span></td></tr>
+                  <tr><td>Metode Bayar</td><td class="text-right"><%= breakdown.metodeBayar %></td></tr>
+                  <tr><td>Tanggal Bayar</td><td class="text-right"><%= breakdown.tanggalBayar ? helpers.formatDate(breakdown.tanggalBayar) : '-' %></td></tr>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <div class="card border-0 bg-light h-100">
+              <div class="card-body text-center">
+                <h5>Foto Bukti Meteran</h5>
+                <% if (latestBill.foto_bukti) { %>
+                  <img src="<%= latestBill.foto_bukti %>" alt="Foto meteran" class="img-fluid rounded shadow-sm mt-2">
+                <% } else { %>
+                  <p class="text-muted mb-0">Belum ada foto bukti.</p>
+                <% } %>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm border-0">
+        <div class="card-body p-4">
+          <div class="row mb-3">
+            <div class="col-md-6 mb-3 mb-md-0">
+              <div class="pelanggan-detail-item h-100">
+                <div class="pelanggan-detail-label">Catatan Pemakaian Terakhir</div>
+                <div class="pelanggan-detail-value mb-2"><%= latestBill.total_kubik %> m3 pada periode <%= latestBill.bulan %>/<%= latestBill.tahun %></div>
+                <div class="small text-muted">Meter <%= latestBill.meteran_awal %> ke <%= latestBill.meteran_akhir %>, tarif <%= helpers.formatCurrency(breakdown.hargaPerKubik) %> per m3, ditagihkan <%= breakdown.kubikDitagihkan %> m3.</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="pelanggan-detail-item h-100">
+                <div class="pelanggan-detail-label">Rincian Tagihan Terakhir</div>
+                <div class="small text-muted">Biaya air <strong><%= helpers.formatCurrency(breakdown.biayaAir) %></strong>, admin <strong><%= helpers.formatCurrency(breakdown.biayaAdmin) %></strong>, denda <strong><%= helpers.formatCurrency(breakdown.denda) %></strong>, total <strong><%= helpers.formatCurrency(breakdown.totalTagihan) %></strong>.</div>
+              </div>
+            </div>
+          </div>
+          <% if (breakdown.abonemenApplied) { %>
+            <div class="alert alert-info">Pemakaian asli bulan ini <strong><%= breakdown.totalKubik %> m3</strong>, tetapi minimum abonement yang ditagih adalah <strong><%= breakdown.kubikDitagihkan %> m3</strong>.</div>
+          <% } %>
+          <h5 class="mb-3">Riwayat 6 Bulan Terakhir</h5>
+          <div class="table-responsive">
+            <table class="table table-striped mb-0">
+              <thead>
+                <tr>
+                  <th>Periode</th>
+                  <th>Pemakaian</th>
+                  <th>Total</th>
+                  <th>Status</th>
+                  <th>Foto Meter</th>
+                  <th>Tgl Bayar</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% history.forEach((item) => { %>
+                  <tr>
+                    <td><%= item.bulan %>/<%= item.tahun %></td>
+                    <td><%= item.total_kubik %> m3</td>
+                    <td><%= helpers.formatCurrency(item.total_tagihan) %></td>
+                    <td><span class="badge badge-<%= item.status_bayar === 'lunas' ? 'success' : 'warning' %>"><%= item.status_bayar %></span></td>
+                    <td>
+                      <% if (item.foto_bukti) { %>
+                        <a href="<%= item.foto_bukti %>" class="meter-photo-link" data-meter-preview data-title="Foto meter <%= item.bulan %>/<%= item.tahun %>">
+                          <img src="<%= item.foto_bukti %>" alt="Foto meter <%= item.bulan %>/<%= item.tahun %>" class="meter-photo-thumb small">
+                        </a>
+                      <% } else { %>
+                        <span class="text-muted">-</span>
+                      <% } %>
+                    </td>
+                    <td><%= item.tgl_bayar ? helpers.formatDate(item.tgl_bayar) : '-' %></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    <% } else if (pelanggan && latestReading) { %>
+      <div class="invoice-print shadow-sm p-4 mb-4">
+        <div class="d-flex justify-content-between align-items-start flex-wrap mb-3">
+          <div>
+            <h4 class="mb-1"><%= pelanggan.nama %></h4>
+            <div class="text-muted">No Meter: <%= pelanggan.no_meteran %></div>
+            <div class="text-muted"><%= pelanggan.alamat %></div>
+          </div>
+          <div class="text-md-right mt-3 mt-md-0">
+            <a href="/pelanggan/login" class="btn btn-outline-primary no-print">Login Dashboard</a>
+          </div>
+        </div>
+
+        <div class="alert alert-warning">
+          Data pencatatan meter ditemukan, namun tagihan periode ini belum terbit.
+          Admin akan melakukan generate tagihan otomatis sesuai jadwal atau bisa digenerate manual.
+        </div>
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <div class="card border-0 bg-light h-100">
+              <div class="card-body">
+                <h5>Catatan Meter Terakhir</h5>
+                <table class="table table-sm table-borderless mb-0">
+                  <tr><td>Periode Baca</td><td class="text-right"><%= latestReading.bulan %>/<%= latestReading.tahun %></td></tr>
+                  <tr><td>Meter Awal</td><td class="text-right"><%= latestReading.meteran_awal %></td></tr>
+                  <tr><td>Meter Akhir</td><td class="text-right"><%= latestReading.meteran_akhir %></td></tr>
+                  <tr><td>Total Kubik</td><td class="text-right"><%= latestReading.total_kubik %> m3</td></tr>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <div class="card border-0 bg-light h-100">
+              <div class="card-body">
+                <h5>Estimasi Tagihan</h5>
+                <% if (estimateBreakdown) { %>
+                  <table class="table table-sm table-borderless mb-0">
+                    <tr><td>Kubik Ditagih</td><td class="text-right"><%= estimateBreakdown.kubikDitagihkan %> m3</td></tr>
+                    <tr><td>Minimum Abonement</td><td class="text-right"><%= estimateBreakdown.minimumPemakaianKubik %> m3</td></tr>
+                    <tr><td>Harga per Kubik</td><td class="text-right"><%= helpers.formatCurrency(estimateBreakdown.hargaPerKubik) %></td></tr>
+                    <tr><td>Biaya Air</td><td class="text-right"><%= helpers.formatCurrency(estimateBreakdown.biayaAir) %></td></tr>
+                    <tr><td>Biaya Admin</td><td class="text-right"><%= helpers.formatCurrency(estimateBreakdown.biayaAdmin) %></td></tr>
+                    <tr class="font-weight-bold"><td>Total Estimasi</td><td class="text-right"><%= helpers.formatCurrency(estimateBreakdown.totalTagihan) %></td></tr>
+                  </table>
+                  <% if (estimateBreakdown.abonemenApplied) { %>
+                    <div class="alert alert-info mt-3 mb-0">Pemakaian di bawah minimum abonement, sehingga kubik ditagih mengikuti minimum abonement.</div>
+                  <% } %>
+                <% } else { %>
+                  <div class="text-muted">Estimasi belum tersedia.</div>
+                <% } %>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <% if (latestReading.foto_bukti) { %>
+          <div class="mt-3">
+            <a href="<%= latestReading.foto_bukti %>" class="meter-photo-link" data-meter-preview data-title="Foto meter <%= latestReading.bulan %>/<%= latestReading.tahun %>">
+              <img src="<%= latestReading.foto_bukti %>" alt="Foto meter <%= latestReading.bulan %>/<%= latestReading.tahun %>" class="meter-photo-thumb">
+            </a>
+            <div class="meter-photo-caption">Foto meter periode <%= helpers.monthName(latestReading.bulan) %> <%= latestReading.tahun %>.</div>
+          </div>
+        <% } %>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<%- include('../partials/public-footer') %>

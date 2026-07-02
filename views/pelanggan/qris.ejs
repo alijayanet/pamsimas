@@ -1,0 +1,133 @@
+<%- include('../partials/public-header', { title, bodyClass: isDashboardAccess ? 'pelanggan-app' : 'bg-light', containerClass: isDashboardAccess ? 'container pelanggan-shell' : 'container py-4 py-md-5' }) %>
+
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="invoice-print shadow-sm p-4">
+      <div class="d-flex justify-content-between align-items-start flex-wrap mb-4">
+        <div class="d-flex align-items-start">
+          <% if (appConfig?.logo_url) { %>
+            <img src="<%= appConfig.logo_url %>" alt="Logo" class="public-logo mr-3">
+          <% } %>
+          <div>
+            <h3 class="mb-1">Pembayaran QRIS Statik</h3>
+            <div class="text-muted"><%= appConfig?.nama_instansi || appConfig?.nama_aplikasi || 'PAMSIMAS' %></div>
+          </div>
+        </div>
+        <a href="<%= backUrl %>" class="btn btn-outline-secondary no-print">Kembali</a>
+      </div>
+
+      <div class="alert alert-info">
+        Status pembayaran akan diperiksa otomatis. Jika admin/kasir sudah memvalidasi pembayaran, halaman ini akan kembali ke detail tagihan.
+      </div>
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <div class="card border-0 bg-light h-100">
+            <div class="card-body">
+              <h5 class="mb-3">Detail Tagihan</h5>
+              <table class="table table-sm table-borderless mb-0">
+                <tr><td>Nama</td><td class="text-right"><%= tagihan.nama %></td></tr>
+                <tr><td>No. Meter</td><td class="text-right"><%= tagihan.no_meteran %></td></tr>
+                <tr><td>Periode</td><td class="text-right"><%= tagihan.bulan %>/<%= tagihan.tahun %></td></tr>
+                <tr><td>Total Tagihan</td><td class="text-right"><%= helpers.formatCurrency(tagihan.total_tagihan) %></td></tr>
+                <tr><td>Kode Unik</td><td class="text-right"><strong><%= String(qris.uniqueCode).padStart(3, '0') %></strong></td></tr>
+                <tr class="font-weight-bold"><td>Bayar Tepat</td><td class="text-right"><%= helpers.formatCurrency(qris.amountUnique) %></td></tr>
+                <tr><td>Status</td><td class="text-right"><span class="badge badge-warning"><%= tagihan.status_bayar %></span></td></tr>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6 mb-3">
+          <div class="card border-0 bg-light h-100">
+            <div class="card-body text-center">
+              <h5 class="mb-3">Scan QRIS</h5>
+              <% if (qrisQrUrl) { %>
+                <img src="<%= qrisQrUrl %>" alt="QRIS Statik" class="img-fluid rounded border p-2 bg-white" style="max-width: 300px;">
+              <% } else { %>
+                <p class="text-muted">Gambar QRIS belum tersedia.</p>
+              <% } %>
+              <p class="small text-muted mt-3 mb-0"><%= helpText %></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card border-0 bg-light mt-3 no-print">
+        <div class="card-body">
+          <h5 class="mb-3">Konfirmasi Pembayaran</h5>
+          <form action="/pelanggan/tagihan/<%= tagihan.id %>/proof" method="post" enctype="multipart/form-data">
+            <% if (!isDashboardAccess) { %>
+              <input type="hidden" name="access_key" value="<%= accessKey %>">
+            <% } %>
+            <div class="form-group">
+              <label>Upload Bukti Bayar</label>
+              <input type="file" name="proof" class="form-control-file" accept="image/*" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Upload Bukti</button>
+            <% if (adminWaDigits) { %>
+              <a
+                href="https://wa.me/<%= adminWaDigits %>?text=<%= encodeURIComponent(`Konfirmasi pembayaran QRIS statik\nNama: ${tagihan.nama}\nNo. Meter: ${tagihan.no_meteran}\nPeriode: ${tagihan.bulan}/${tagihan.tahun}\nNominal: Rp ${Number(qris.amountUnique).toLocaleString('id-ID')} (kode ${String(qris.uniqueCode).padStart(3, '0')})`) %>"
+                target="_blank"
+                rel="noopener"
+                class="btn btn-outline-success ml-2"
+              >WhatsApp Admin</a>
+            <% } %>
+          </form>
+
+          <% if (tagihan.payment_proof_url) { %>
+            <div class="mt-3">
+              <div class="small text-muted mb-2">Bukti yang sudah diupload:</div>
+              <img src="<%= tagihan.payment_proof_url %>" alt="Bukti pembayaran" class="img-fluid rounded border" style="max-width: 260px;">
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var attempts = 0;
+    var maxAttempts = 120;
+    var pollInterval = 5000;
+    var statusUrl = '<%= statusUrl %>';
+    var redirectUrl = '<%= redirectUrl %>';
+
+    async function checkStatus() {
+      if (attempts >= maxAttempts) {
+        return;
+      }
+
+      attempts += 1;
+
+      try {
+        var response = await fetch(statusUrl, {
+          headers: { Accept: 'application/json' },
+          credentials: 'same-origin'
+        });
+
+        if (!response.ok) {
+          throw new Error('Status check failed');
+        }
+
+        var data = await response.json();
+        if (data.status === 'lunas') {
+          window.location.href = redirectUrl;
+          return;
+        }
+      } catch (error) {
+      }
+
+      setTimeout(checkStatus, pollInterval);
+    }
+
+    setTimeout(checkStatus, 3000);
+  })();
+</script>
+
+<% if (isDashboardAccess) { %>
+  <%- include('../partials/pelanggan-bottom-nav', { activeTab: 'bill' }) %>
+<% } %>
+
+<%- include('../partials/public-footer') %>

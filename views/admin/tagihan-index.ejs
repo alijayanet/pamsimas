@@ -1,0 +1,164 @@
+<%- include('../partials/admin-header', { title, activeMenu: 'tagihan' }) %>
+
+<div class="row">
+  <div class="col-lg-6">
+    <div class="card card-success">
+      <div class="card-header"><h3 class="card-title">Generate Tagihan Manual</h3></div>
+      <div class="card-body">
+        <form action="/admin/tagihan/generate" method="post">
+          <input type="hidden" name="redirect_to" value="/admin/tagihan?bulan=<%= bulan %>&tahun=<%= tahun %>&status=<%= encodeURIComponent(status) %>&keyword=<%= encodeURIComponent(keyword) %>&limit=<%= limit %>">
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label>Bulan Pencatatan</label>
+              <input type="number" name="source_month" class="form-control" min="1" max="12" value="<%= generationDefaults.sourcePeriod.bulan %>" required>
+            </div>
+            <div class="form-group col-md-6">
+              <label>Tahun Pencatatan</label>
+              <input type="number" name="source_year" class="form-control" min="2000" max="3000" value="<%= generationDefaults.sourcePeriod.tahun %>" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label>Bulan Tagihan</label>
+              <input type="number" name="billing_month" class="form-control" min="1" max="12" value="<%= generationDefaults.billingPeriod.bulan %>" required>
+            </div>
+            <div class="form-group col-md-6">
+              <label>Tahun Tagihan</label>
+              <input type="number" name="billing_year" class="form-control" min="2000" max="3000" value="<%= generationDefaults.billingPeriod.tahun %>" required>
+            </div>
+          </div>
+          <p class="text-muted mb-3">Generate ini akan membuat invoice/tagihan dari data pencatatan meter yang belum punya tagihan.</p>
+          <button type="submit" class="btn btn-success">Generate Tagihan Manual</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card card-primary">
+      <div class="card-header"><h3 class="card-title">Filter & Ringkasan</h3></div>
+      <div class="card-body">
+        <form method="get" action="/admin/tagihan">
+          <div class="form-row">
+            <div class="form-group col-md-3">
+              <label>Bulan</label>
+              <input type="number" name="bulan" class="form-control" min="1" max="12" value="<%= bulan %>" required>
+            </div>
+            <div class="form-group col-md-3">
+              <label>Tahun</label>
+              <input type="number" name="tahun" class="form-control" min="2000" max="3000" value="<%= tahun %>" required>
+            </div>
+            <div class="form-group col-md-3">
+              <label>Status</label>
+              <select name="status" class="form-control">
+                <option value="all" <%= status === 'all' ? 'selected' : '' %>>Semua</option>
+                <option value="belum_bayar" <%= status === 'belum_bayar' ? 'selected' : '' %>>Belum Bayar</option>
+                <option value="lunas" <%= status === 'lunas' ? 'selected' : '' %>>Lunas</option>
+              </select>
+            </div>
+            <div class="form-group col-md-3">
+              <label>Limit</label>
+              <input type="number" name="limit" class="form-control" min="10" max="1000" value="<%= limit %>">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group col-md-9">
+              <label>Cari (meter / nama / WA)</label>
+              <input type="text" name="keyword" class="form-control" value="<%= keyword %>" placeholder="Contoh: 00012 atau Budi atau 0812...">
+            </div>
+            <div class="form-group col-md-3 d-flex align-items-end">
+              <button type="submit" class="btn btn-primary btn-block">Tampilkan</button>
+            </div>
+          </div>
+        </form>
+
+        <div class="alert alert-light border mb-0">
+          <div class="d-flex justify-content-between flex-wrap" style="gap:10px;">
+            <div><strong>Periode:</strong> <%= bulan %>/<%= tahun %></div>
+            <div><strong>Total:</strong> <%= summary.total %></div>
+            <div><strong>Belum:</strong> <%= summary.belum %></div>
+            <div><strong>Lunas:</strong> <%= summary.lunas %></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><h3 class="card-title">Daftar Tagihan</h3></div>
+  <div class="card-body table-responsive p-0">
+    <table class="table table-hover table-striped">
+      <thead>
+        <tr>
+          <th>Pelanggan</th>
+          <th>Periode</th>
+          <th>Total</th>
+          <th>Status</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (bills.length) { %>
+          <% bills.forEach((item) => { %>
+            <tr>
+              <td>
+                <strong><%= item.nama %></strong><br>
+                <small class="text-muted"><%= item.no_meteran %> | WA <%= item.no_whatsapp || '-' %></small>
+              </td>
+              <td>
+                <div><strong><%= item.bulan %>/<%= item.tahun %></strong></div>
+                <small class="text-muted">Baca <%= item.bulan_baca %>/<%= item.tahun_baca %></small>
+              </td>
+              <td><%= helpers.formatCurrency(item.total_tagihan) %></td>
+              <td>
+                <span class="badge badge-<%= item.status_bayar === 'lunas' ? 'success' : 'warning' %>"><%= item.status_bayar %></span>
+                <span class="badge badge-<%= item.generated_mode === 'auto' ? 'primary' : 'secondary' %>"><%= item.generated_mode || 'manual' %></span>
+                <% if (item.status_bayar === 'lunas') { %>
+                  <div><small class="text-muted"><%= item.tgl_bayar ? helpers.formatDate(item.tgl_bayar) : '-' %> / <%= item.metode_bayar || '-' %></small></div>
+                <% } else { %>
+                  <% if (item.qris_amount_unique) { %>
+                    <div><small class="text-muted">QRIS <%= helpers.formatCurrency(item.qris_amount_unique) %> / kode <%= String(item.qris_unique_code || 0).padStart(3, '0') %></small></div>
+                  <% } %>
+                <% } %>
+              </td>
+              <td class="text-nowrap">
+                <div class="d-flex flex-wrap" style="gap:6px;">
+                  <a href="/admin/tagihan/<%= item.id %>" class="btn btn-sm btn-outline-primary">Detail</a>
+                  <a href="/pelanggan/cek?keyword=<%= encodeURIComponent(item.no_meteran) %>" target="_blank" class="btn btn-sm btn-outline-secondary">Invoice</a>
+                  <% if (item.status_bayar !== 'lunas') { %>
+                    <form action="/admin/tagihan/<%= item.id %>/lunas" method="post" class="form-inline">
+                      <input type="hidden" name="metode_bayar" value="tunai">
+                      <button class="btn btn-sm btn-success" type="submit">Lunaskan</button>
+                    </form>
+                    <form action="/admin/tagihan/<%= item.id %>/qris-assign" method="post" class="form-inline">
+                      <button class="btn btn-sm btn-primary" type="submit"><%= item.qris_amount_unique ? 'QRIS Ulang' : 'QRIS' %></button>
+                    </form>
+                    <% if (item.qris_amount_unique) { %>
+                      <form action="/admin/tagihan/<%= item.id %>/qris-assign?force=1" method="post" class="form-inline">
+                        <button class="btn btn-sm btn-warning" type="submit">Regenerate</button>
+                      </form>
+                      <form action="/admin/tagihan/<%= item.id %>/qris-clear" method="post" class="form-inline">
+                        <button class="btn btn-sm btn-outline-danger" type="submit">Clear</button>
+                      </form>
+                    <% } %>
+                    <form action="/admin/tagihan/<%= item.id %>/wa-qris" method="post" class="form-inline">
+                      <button class="btn btn-sm btn-success" type="submit">Kirim WA</button>
+                    </form>
+                  <% } else { %>
+                    <span class="text-success">Selesai</span>
+                  <% } %>
+                </div>
+              </td>
+            </tr>
+          <% }) %>
+        <% } else { %>
+          <tr>
+            <td colspan="5" class="text-center text-muted py-4">Tidak ada tagihan pada filter ini.</td>
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- include('../partials/admin-footer') %>

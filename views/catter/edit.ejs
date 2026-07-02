@@ -1,0 +1,57 @@
+<%- include('../partials/admin-header', { title, activeMenu: 'catter' }) %>
+
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center flex-wrap" style="gap:10px;">
+    <h3 class="card-title mb-0">Edit Pencatatan Meteran</h3>
+    <a href="/catter" class="btn btn-sm btn-outline-secondary">Kembali</a>
+  </div>
+  <div class="card-body">
+    <div class="alert alert-info">
+      <strong><%= reading.nama %></strong><br>
+      No meter: <%= reading.no_meteran %> | WA: <%= reading.no_whatsapp || '-' %><br>
+      Periode: <strong><%= reading.bulan %>/<%= reading.tahun %></strong>
+      <% if (reading.tagihan_id) { %>
+        | Tagihan: <strong><%= reading.tagihan_status_bayar %></strong>
+      <% } %>
+    </div>
+
+    <form action="/catter/pencatatan/<%= reading.id %>" method="post" enctype="multipart/form-data">
+      <input type="hidden" name="current_foto_bukti" value="<%= reading.foto_bukti || '' %>">
+      <div class="row">
+        <div class="col-md-6 form-group">
+          <label>Meteran Awal</label>
+          <input type="number" name="meteran_awal" class="form-control" value="<%= reading.meteran_awal %>" min="0" required>
+        </div>
+        <div class="col-md-6 form-group">
+          <label>Meteran Akhir</label>
+          <input type="number" name="meteran_akhir" class="form-control" value="<%= reading.meteran_akhir %>" min="0" required>
+        </div>
+        <div class="col-md-6 form-group">
+          <label>Status Input</label>
+          <select name="status_input" class="form-control">
+            <option value="pending" <%= reading.status_input === 'pending' ? 'selected' : '' %>>Pending</option>
+            <option value="verified" <%= reading.status_input === 'verified' ? 'selected' : '' %>>Verified</option>
+          </select>
+        </div>
+        <div class="col-md-6 form-group">
+          <label>Foto Bukti Meteran</label>
+          <input type="file" name="foto_bukti" accept="image/*" capture="environment" class="form-control-file">
+          <% if (reading.foto_bukti) { %>
+            <div class="mt-2">
+              <img src="<%= reading.foto_bukti %>" alt="Foto bukti meteran" class="img-fluid rounded border" style="max-height: 220px;">
+            </div>
+          <% } %>
+        </div>
+      </div>
+      <% if (reading.tagihan_id) { %>
+        <div class="form-group form-check mt-2">
+          <input type="checkbox" class="form-check-input" id="send_wa" name="send_wa" value="1">
+          <label class="form-check-label" for="send_wa">Kirim notifikasi WhatsApp ke pelanggan (opsional)</label>
+        </div>
+      <% } %>
+      <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+    </form>
+  </div>
+</div>
+
+<%- include('../partials/admin-footer') %>

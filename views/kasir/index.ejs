@@ -1,0 +1,181 @@
+<%- include('../partials/admin-header', { title, activeMenu: 'kasir' }) %>
+
+<div class="row">
+  <div class="col-lg-5">
+    <div class="card">
+      <div class="card-header"><h3 class="card-title">Cari Tagihan Belum Lunas</h3></div>
+      <div class="card-body">
+        <form action="/kasir" method="get" class="mb-3">
+          <div class="input-group">
+            <input type="text" name="keyword" class="form-control" placeholder="No meter / nama / no WA" value="<%= keyword %>">
+            <div class="input-group-append">
+              <button class="btn btn-primary" type="submit">Cari</button>
+            </div>
+          </div>
+        </form>
+
+        <% if (results.length) { %>
+          <div class="list-group">
+            <% results.forEach((item) => { %>
+              <a href="/kasir?keyword=<%= encodeURIComponent(keyword) %>&tagihan_id=<%= item.id %>" class="list-group-item list-group-item-action">
+                <strong><%= item.nama %></strong><br>
+                <small><%= item.no_meteran %> | <%= item.bulan %>/<%= item.tahun %> | <%= helpers.formatCurrency(item.total_tagihan) %></small>
+              </a>
+            <% }) %>
+          </div>
+        <% } else if (keyword) { %>
+          <p class="text-muted mb-0">Tagihan belum lunas tidak ditemukan.</p>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header"><h3 class="card-title">Pembayaran Loket</h3></div>
+      <div class="card-body">
+        <% if (selectedBill && selectedBill.status_bayar !== 'lunas') { %>
+          <div class="alert alert-info">
+            <strong><%= selectedBill.nama %></strong><br>
+            No meter: <%= selectedBill.no_meteran %> | Periode: <%= selectedBill.bulan %>/<%= selectedBill.tahun %>
+          </div>
+          <table class="table table-sm">
+            <tr><th>Total Kubik</th><td><%= selectedBill.total_kubik %> m3</td></tr>
+            <tr><th>Denda</th><td><%= helpers.formatCurrency(selectedBill.denda) %></td></tr>
+            <tr><th>Total Bayar</th><td><strong><%= helpers.formatCurrency(selectedBill.total_tagihan) %></strong></td></tr>
+            <% if (selectedBill.qris_amount_unique) { %>
+              <tr><th>QRIS Unik</th><td><strong><%= helpers.formatCurrency(selectedBill.qris_amount_unique) %></strong> (kode <%= String(selectedBill.qris_unique_code || 0).padStart(3, '0') %>)</td></tr>
+            <% } %>
+          </table>
+          <div class="mb-3 d-flex flex-wrap" style="gap:6px;">
+            <form action="/kasir/tagihan/<%= selectedBill.id %>/qris-assign" method="post">
+              <button type="submit" class="btn btn-sm btn-primary"><%= selectedBill.qris_amount_unique ? 'QRIS Ulang' : 'Siapkan QRIS' %></button>
+            </form>
+            <% if (selectedBill.qris_amount_unique) { %>
+              <form action="/kasir/tagihan/<%= selectedBill.id %>/qris-assign?force=1" method="post">
+                <button type="submit" class="btn btn-sm btn-warning">Regenerate</button>
+              </form>
+              <form action="/kasir/tagihan/<%= selectedBill.id %>/qris-clear" method="post">
+                <button type="submit" class="btn btn-sm btn-outline-danger">Clear</button>
+              </form>
+            <% } %>
+            <form action="/kasir/tagihan/<%= selectedBill.id %>/wa-qris" method="post">
+              <button type="submit" class="btn btn-sm btn-success">Kirim QRIS WA</button>
+            </form>
+          </div>
+          <% if (selectedBill.payment_proof_url) { %>
+            <div class="mb-3">
+              <div class="small text-muted mb-2">Bukti pembayaran dari pelanggan:</div>
+              <a href="<%= selectedBill.payment_proof_url %>" target="_blank" rel="noopener">
+                <img src="<%= selectedBill.payment_proof_url %>" alt="Bukti pembayaran" class="img-fluid rounded border" style="max-width: 260px;">
+              </a>
+            </div>
+          <% } %>
+          <form action="/kasir/bayar" method="post">
+            <input type="hidden" name="tagihan_id" value="<%= selectedBill.id %>">
+            <div class="row">
+              <div class="col-md-6 form-group">
+                <label>Metode Bayar</label>
+                <select name="metode_bayar" class="form-control">
+                  <option value="tunai">Tunai</option>
+                  <option value="transfer">Transfer</option>
+                  <option value="qris">QRIS</option>
+                </select>
+              </div>
+              <div class="col-md-6 form-group">
+                <label>Total Dibayar</label>
+                <input type="text" class="form-control" value="<%= helpers.formatCurrency(selectedBill.total_tagihan) %>" readonly>
+              </div>
+              <div class="col-12 form-group">
+                <label>Keterangan</label>
+                <textarea name="keterangan" class="form-control" rows="3" placeholder="Catatan pembayaran loket"></textarea>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-success btn-block">Proses Pembayaran</button>
+          </form>
+        <% } else { %>
+          <p class="text-muted mb-0">Pilih tagihan dari hasil pencarian untuk memproses pembayaran.</p>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card mt-3">
+  <div class="card-header"><h3 class="card-title">Riwayat Pembayaran Terbaru</h3></div>
+  <div class="card-body table-responsive p-0">
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Waktu</th>
+          <th>Pelanggan</th>
+          <th>Periode</th>
+          <th>Petugas</th>
+          <th>Metode</th>
+          <th>Jumlah</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% recentPayments.forEach((item) => { %>
+          <tr>
+            <td><%= helpers.formatDate(item.created_at) %></td>
+            <td><%= item.nama %><br><small class="text-muted"><%= item.no_meteran %></small></td>
+            <td><%= item.bulan %>/<%= item.tahun %></td>
+            <td><%= item.username %></td>
+            <td><%= item.metode_bayar %></td>
+            <td><%= helpers.formatCurrency(item.jumlah_bayar) %></td>
+            <td><a href="/kasir/kwitansi/<%= item.id %>" class="btn btn-sm btn-outline-primary">Kwitansi</a></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card mt-3">
+  <div class="card-header"><h3 class="card-title">Log Notifikasi QRIS</h3></div>
+  <div class="card-body table-responsive p-0">
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Waktu</th>
+          <th>Status</th>
+          <th>Nominal</th>
+          <th>Pelanggan</th>
+          <th>Catatan</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (qrisNotifLogs.length) { %>
+          <% qrisNotifLogs.forEach((item) => { %>
+            <tr>
+              <td><%= helpers.formatDate(item.received_at) %></td>
+              <td>
+                <span class="badge badge-<%= item.match_status === 'matched' ? 'success' : (item.match_status === 'ignored' ? 'warning' : 'danger') %>">
+                  <%= item.match_status %>
+                </span>
+              </td>
+              <td><%= item.amount_detected ? helpers.formatCurrency(item.amount_detected) : '-' %></td>
+              <td>
+                <% if (item.matched_tagihan_id) { %>
+                  <strong><%= item.nama %></strong><br>
+                  <small class="text-muted"><%= item.no_meteran %> | <%= item.bulan %>/<%= item.tahun %></small>
+                <% } else { %>
+                  -
+                <% } %>
+              </td>
+              <td><%= item.match_reason || '-' %></td>
+            </tr>
+          <% }) %>
+        <% } else { %>
+          <tr>
+            <td colspan="5" class="text-center text-muted py-4">Belum ada log QRIS otomatis.</td>
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- include('../partials/admin-footer') %>

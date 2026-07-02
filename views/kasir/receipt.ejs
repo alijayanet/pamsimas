@@ -1,0 +1,47 @@
+<%- include('../partials/admin-header', { title, activeMenu: 'kasir' }) %>
+
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card invoice-print">
+      <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-start mb-4">
+          <div class="d-flex align-items-start">
+            <% if (appConfig?.logo_url) { %>
+              <img src="<%= appConfig.logo_url %>" alt="Logo" class="receipt-logo mr-3">
+            <% } %>
+            <div>
+              <h3 class="mb-1">Kwitansi Pembayaran <%= appConfig?.nama_aplikasi || 'PAMSIMAS' %></h3>
+              <div><%= appConfig?.nama_instansi || 'Unit Pengelola PAMSIMAS' %></div>
+            <% if (appConfig?.alamat_loket) { %>
+              <div class="text-muted"><%= appConfig.alamat_loket %></div>
+            <% } %>
+            <div class="text-muted">No. Kwitansi: <%= receipt.id %></div>
+            </div>
+          </div>
+          <button onclick="window.print()" class="btn btn-outline-primary no-print">Cetak</button>
+        </div>
+
+        <table class="table table-borderless">
+          <tr><th width="35%">Nama Pelanggan</th><td><%= receipt.nama %></td></tr>
+          <tr><th>No. Meter</th><td><%= receipt.no_meteran %></td></tr>
+          <tr><th>Alamat</th><td><%= receipt.alamat %></td></tr>
+          <tr><th>Periode</th><td><%= receipt.bulan %>/<%= receipt.tahun %></td></tr>
+          <tr><th>Total Tagihan</th><td><strong><%= helpers.formatCurrency(receipt.total_tagihan) %></strong></td></tr>
+          <tr><th>Jumlah Dibayar</th><td><strong><%= helpers.formatCurrency(receipt.jumlah_bayar) %></strong></td></tr>
+          <tr><th>Metode Bayar</th><td><%= receipt.metode_bayar %></td></tr>
+          <tr><th>Petugas Loket</th><td><%= receipt.username %></td></tr>
+          <tr><th>Waktu Bayar</th><td><%= helpers.formatDate(receipt.created_at) %></td></tr>
+          <tr><th>Keterangan</th><td><%= receipt.keterangan || '-' %></td></tr>
+        </table>
+        <% if (appConfig?.no_whatsapp_loket) { %>
+          <p class="mb-1"><strong>Kontak Loket:</strong> <%= appConfig.no_whatsapp_loket %></p>
+        <% } %>
+        <% if (appConfig?.footer_kwitansi) { %>
+          <p class="text-muted mb-0"><%= appConfig.footer_kwitansi %></p>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/admin-footer') %>

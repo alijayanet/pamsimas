@@ -1,0 +1,42 @@
+<%- include('../partials/admin-header', { title, activeMenu: 'pelanggan' }) %>
+
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h3 class="card-title mb-0">Daftar Pelanggan</h3>
+    <a href="/admin/pelanggan/new" class="btn btn-primary btn-sm">Tambah Pelanggan</a>
+  </div>
+  <div class="card-body table-responsive p-0">
+    <table class="table table-hover">
+      <thead>
+        <tr>
+          <th>No. Meter</th>
+          <th>Nama</th>
+          <th>Alamat</th>
+          <th>WA</th>
+          <th>Status</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% pelanggan.forEach((item) => { %>
+          <tr>
+            <td><%= item.no_meteran %></td>
+            <td><%= item.nama %></td>
+            <td><%= item.alamat %></td>
+            <td><%= item.no_whatsapp || '-' %></td>
+            <td><span class="badge badge-<%= item.status_tagihan_terakhir === 'lunas' ? 'success' : 'warning' %>"><%= item.status_tagihan_terakhir || 'belum ada' %></span></td>
+            <td class="text-nowrap">
+              <a href="/admin/pelanggan/<%= item.id %>/edit" class="btn btn-sm btn-warning">Edit</a>
+              <a href="/admin/pelanggan/<%= item.id %>/qr" class="btn btn-sm btn-info">QR</a>
+              <form action="/admin/pelanggan/<%= item.id %>/delete" method="post" class="d-inline">
+                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Hapus pelanggan ini?')">Hapus</button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- include('../partials/admin-footer') %>

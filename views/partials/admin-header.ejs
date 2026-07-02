@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= title %> - <%= appConfig?.nama_aplikasi || 'PAMSIMAS' %></title>
+  <link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css">
+  <link rel="stylesheet" href="/vendor/admin-lte/dist/css/adminlte.min.css">
+  <link rel="stylesheet" href="/public/css/app.css">
+  <% if (appConfig?.logo_url) { %>
+    <link rel="icon" href="<%= appConfig.logo_url %>">
+  <% } %>
+</head>
+<body class="hold-transition sidebar-mini layout-fixed">
+<div class="wrapper">
+  <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+    <ul class="navbar-nav">
+      <li class="nav-item">
+        <a class="nav-link" data-widget="pushmenu" href="#"><i class="fas fa-bars"></i></a>
+      </li>
+    </ul>
+    <ul class="navbar-nav ml-auto align-items-center">
+      <li class="nav-item mr-3 text-muted small"><%= currentUser ? currentUser.username : 'Guest' %></li>
+      <% if (currentUser) { %>
+        <li class="nav-item">
+          <form action="/logout" method="post" class="mb-0">
+            <button type="submit" class="btn btn-sm btn-outline-danger">Logout</button>
+          </form>
+        </li>
+      <% } %>
+    </ul>
+  </nav>
+
+  <aside class="main-sidebar sidebar-dark-primary elevation-4">
+    <a href="/" class="brand-link">
+      <% if (appConfig?.logo_url) { %>
+        <img src="<%= appConfig.logo_url %>" alt="Logo" class="brand-image img-circle elevation-3" style="opacity: .9;">
+      <% } else { %>
+        <span class="brand-image img-circle elevation-3 d-inline-flex align-items-center justify-content-center bg-white text-primary" style="width: 33px; height: 33px; opacity: .9;">
+          <i class="fas fa-tint"></i>
+        </span>
+      <% } %>
+      <span class="brand-text font-weight-light ml-2"><%= appConfig?.nama_aplikasi || 'PAMSIMAS' %></span>
+    </a>
+    <div class="sidebar">
+      <nav class="mt-3">
+        <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu">
+          <% if (currentUser && currentUser.role === 'admin') { %>
+            <li class="nav-item"><a href="/admin" class="nav-link <%= activeMenu === 'dashboard' ? 'active' : '' %>"><i class="nav-icon fas fa-chart-pie"></i><p>Dashboard</p></a></li>
+            <li class="nav-item"><a href="/admin/tagihan" class="nav-link <%= activeMenu === 'tagihan' ? 'active' : '' %>"><i class="nav-icon fas fa-file-invoice"></i><p>Tagihan</p></a></li>
+            <li class="nav-item"><a href="/admin/pelanggan" class="nav-link <%= activeMenu === 'pelanggan' ? 'active' : '' %>"><i class="nav-icon fas fa-users"></i><p>Pelanggan</p></a></li>
+            <li class="nav-item"><a href="/admin/petugas" class="nav-link <%= activeMenu === 'petugas' ? 'active' : '' %>"><i class="nav-icon fas fa-user-cog"></i><p>Petugas</p></a></li>
+            <li class="nav-item"><a href="/admin/pengaturan" class="nav-link <%= activeMenu === 'pengaturan' ? 'active' : '' %>"><i class="nav-icon fas fa-cog"></i><p>Tarif & Keuangan</p></a></li>
+            <li class="nav-item"><a href="/kasir" class="nav-link <%= activeMenu === 'kasir' ? 'active' : '' %>"><i class="nav-icon fas fa-cash-register"></i><p>Kasir / Loket</p></a></li>
+            <li class="nav-item"><a href="/admin/whatsapp" class="nav-link <%= activeMenu === 'whatsapp' ? 'active' : '' %>"><i class="nav-icon fab fa-whatsapp"></i><p>WhatsApp</p></a></li>
+          <% } %>
+          <% if (currentUser && (currentUser.role === 'catter' || currentUser.role === 'admin')) { %>
+            <li class="nav-item"><a href="/catter" class="nav-link <%= activeMenu === 'catter' ? 'active' : '' %>"><i class="nav-icon fas fa-tachometer-alt"></i><p>Input Meteran</p></a></li>
+          <% } %>
+          <% if (currentUser && currentUser.role === 'kasir') { %>
+            <li class="nav-item"><a href="/kasir" class="nav-link <%= activeMenu === 'kasir' ? 'active' : '' %>"><i class="nav-icon fas fa-cash-register"></i><p>Kasir / Loket</p></a></li>
+          <% } %>
+          <li class="nav-item"><a href="/pelanggan/cek" class="nav-link"><i class="nav-icon fas fa-file-invoice"></i><p>Cek Tagihan</p></a></li>
+        </ul>
+      </nav>
+    </div>
+  </aside>
+
+  <div class="content-wrapper">
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1><%= title %></h1>
+          </div>
+        </div>
+        <% if (flash) { %>
+          <div class="alert alert-<%= flash.type %>"><%= flash.message %></div>
+        <% } %>
+      </div>
+    </section>
+    <section class="content">
+      <div class="container-fluid">

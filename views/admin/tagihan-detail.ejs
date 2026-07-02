@@ -1,0 +1,125 @@
+<%- include('../partials/admin-header', { title, activeMenu: 'tagihan' }) %>
+
+<div class="row">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center flex-wrap" style="gap:10px;">
+        <h3 class="card-title mb-0">Invoice Tagihan</h3>
+        <div class="d-flex flex-wrap" style="gap:6px;">
+          <a href="/admin/tagihan" class="btn btn-sm btn-outline-secondary">Kembali</a>
+          <button type="button" class="btn btn-sm btn-outline-primary" onclick="window.print()">Cetak</button>
+          <a href="/pelanggan/cek?keyword=<%= encodeURIComponent(tagihan.no_meteran) %>" target="_blank" class="btn btn-sm btn-outline-secondary">Invoice Publik</a>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <div class="border rounded p-3 h-100">
+              <div class="text-muted small mb-1">Pelanggan</div>
+              <div class="h5 mb-1"><%= tagihan.nama %></div>
+              <div class="text-muted">No. Meter <strong><%= tagihan.no_meteran %></strong></div>
+              <div class="text-muted">WA <strong><%= tagihan.no_whatsapp || '-' %></strong></div>
+              <div class="text-muted"><%= tagihan.alamat || '-' %></div>
+            </div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <div class="border rounded p-3 h-100">
+              <div class="text-muted small mb-1">Periode</div>
+              <div class="h5 mb-1"><%= breakdown.periode %></div>
+              <div class="text-muted">Periode baca <strong><%= breakdown.periodeBaca %></strong></div>
+              <div class="mt-2">
+                <span class="badge badge-<%= tagihan.status_bayar === 'lunas' ? 'success' : 'warning' %>"><%= tagihan.status_bayar %></span>
+                <span class="badge badge-<%= tagihan.generated_mode === 'auto' ? 'primary' : 'secondary' %>"><%= tagihan.generated_mode || 'manual' %></span>
+              </div>
+              <div class="mt-2 text-muted small">
+                <div><strong>Dibuat:</strong> <%= tagihan.generated_at ? helpers.formatDate(tagihan.generated_at) : '-' %></div>
+                <div><strong>Bayar:</strong> <%= tagihan.tgl_bayar ? helpers.formatDate(tagihan.tgl_bayar) : '-' %> / <%= tagihan.metode_bayar || '-' %></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <div class="border rounded p-3 h-100">
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="font-weight-bold">Detail Pemakaian</div>
+                <% if (tagihan.foto_bukti) { %>
+                  <a href="<%= tagihan.foto_bukti %>" target="_blank" class="btn btn-sm btn-outline-secondary">Foto Meter</a>
+                <% } %>
+              </div>
+              <table class="table table-sm table-borderless mb-0 mt-2">
+                <tr><td>Meter Awal</td><td class="text-right"><%= breakdown.meterAwal %></td></tr>
+                <tr><td>Meter Akhir</td><td class="text-right"><%= breakdown.meterAkhir %></td></tr>
+                <tr><td>Pemakaian</td><td class="text-right"><%= breakdown.totalKubik %> m3</td></tr>
+                <tr><td>Kubik Ditagih</td><td class="text-right"><%= breakdown.kubikDitagihkan %> m3</td></tr>
+              </table>
+              <% if (tagihan.foto_bukti) { %>
+                <div class="mt-2">
+                  <img src="<%= tagihan.foto_bukti %>" alt="Foto bukti meter" class="img-fluid rounded border" style="max-height: 260px;">
+                </div>
+              <% } %>
+            </div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <div class="border rounded p-3 h-100">
+              <div class="font-weight-bold">Rincian Biaya (Snapshot)</div>
+              <table class="table table-sm table-borderless mb-0 mt-2">
+                <tr><td>Harga per m3</td><td class="text-right"><%= helpers.formatCurrency(breakdown.hargaPerKubik) %></td></tr>
+                <tr><td>Minimum Abonement</td><td class="text-right"><%= breakdown.minimumPemakaianKubik %> m3</td></tr>
+                <tr><td>Biaya Air</td><td class="text-right"><%= helpers.formatCurrency(breakdown.biayaAir) %></td></tr>
+                <tr><td>Biaya Admin</td><td class="text-right"><%= helpers.formatCurrency(breakdown.biayaAdmin) %></td></tr>
+                <tr><td>Denda</td><td class="text-right"><%= helpers.formatCurrency(breakdown.denda) %></td></tr>
+                <tr class="border-top"><td><strong>Total</strong></td><td class="text-right"><strong><%= helpers.formatCurrency(breakdown.totalTagihan) %></strong></td></tr>
+              </table>
+              <% if (tagihan.status_bayar !== 'lunas' && tagihan.qris_amount_unique) { %>
+                <div class="alert alert-light border mt-3 mb-0">
+                  <div class="small text-muted">Kode QRIS unik</div>
+                  <div><strong><%= helpers.formatCurrency(tagihan.qris_amount_unique) %></strong> (kode <%= String(tagihan.qris_unique_code || 0).padStart(3, '0') %>)</div>
+                </div>
+              <% } %>
+            </div>
+          </div>
+        </div>
+
+        <% if (tagihan.status_bayar !== 'lunas') { %>
+          <div class="alert alert-warning mb-0">
+            Status masih belum bayar. Anda bisa lunaskan dari halaman ini atau siapkan QRIS dan kirim WA.
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card card-info">
+      <div class="card-header"><h3 class="card-title">Aksi</h3></div>
+      <div class="card-body">
+        <% if (tagihan.status_bayar !== 'lunas') { %>
+          <form action="/admin/tagihan/<%= tagihan.id %>/lunas" method="post" class="mb-2">
+            <input type="hidden" name="metode_bayar" value="tunai">
+            <button class="btn btn-success btn-block" type="submit">Tandai Lunas (Tunai)</button>
+          </form>
+          <form action="/admin/tagihan/<%= tagihan.id %>/qris-assign" method="post" class="mb-2">
+            <button class="btn btn-primary btn-block" type="submit"><%= tagihan.qris_amount_unique ? 'QRIS Ulang' : 'Siapkan QRIS' %></button>
+          </form>
+          <% if (tagihan.qris_amount_unique) { %>
+            <form action="/admin/tagihan/<%= tagihan.id %>/qris-assign?force=1" method="post" class="mb-2">
+              <button class="btn btn-warning btn-block" type="submit">Regenerate QRIS</button>
+            </form>
+            <form action="/admin/tagihan/<%= tagihan.id %>/qris-clear" method="post" class="mb-2">
+              <button class="btn btn-outline-danger btn-block" type="submit">Clear QRIS</button>
+            </form>
+          <% } %>
+          <form action="/admin/tagihan/<%= tagihan.id %>/wa-qris" method="post">
+            <button class="btn btn-success btn-block" type="submit">Kirim WA QRIS</button>
+          </form>
+        <% } else { %>
+          <div class="alert alert-success mb-0">Tagihan sudah lunas.</div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/admin-footer') %>
+

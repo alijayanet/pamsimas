@@ -1,0 +1,365 @@
+<%- include('../partials/admin-header', { title, activeMenu: 'pengaturan' }) %>
+
+<div class="row">
+  <div class="col-lg-3 col-6">
+    <div class="small-box bg-info">
+      <div class="inner">
+        <h3><%= qrisLogSummary.total || 0 %></h3>
+        <p>Total Notifikasi QRIS</p>
+      </div>
+      <div class="icon"><i class="fas fa-bell"></i></div>
+    </div>
+  </div>
+  <div class="col-lg-3 col-6">
+    <div class="small-box bg-success">
+      <div class="inner">
+        <h3><%= qrisLogSummary.matched_total || 0 %></h3>
+        <p>Matched</p>
+      </div>
+      <div class="icon"><i class="fas fa-check-circle"></i></div>
+    </div>
+  </div>
+  <div class="col-lg-3 col-6">
+    <div class="small-box bg-warning">
+      <div class="inner">
+        <h3><%= qrisLogSummary.ignored_total || 0 %></h3>
+        <p>Ignored</p>
+      </div>
+      <div class="icon"><i class="fas fa-exclamation-circle"></i></div>
+    </div>
+  </div>
+  <div class="col-lg-3 col-6">
+    <div class="small-box bg-danger">
+      <div class="inner">
+        <h3><%= qrisLogSummary.failed_total || 0 %></h3>
+        <p>Failed Parse</p>
+      </div>
+      <div class="icon"><i class="fas fa-times-circle"></i></div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-6">
+    <div class="card card-info">
+      <div class="card-header"><h3 class="card-title">Pengaturan Aplikasi</h3></div>
+      <div class="card-body">
+        <form action="/admin/pengaturan/aplikasi" method="post" enctype="multipart/form-data">
+          <input type="hidden" name="id" value="<%= appConfig.id %>">
+          <input type="hidden" name="current_qris_static_qr_url" value="<%= appConfig.qris_static_qr_url || '' %>">
+          <input type="hidden" name="current_logo_url" value="<%= appConfig.logo_url || '' %>">
+          <div class="form-group">
+            <label>Nama Aplikasi</label>
+            <input type="text" name="nama_aplikasi" class="form-control" value="<%= appConfig.nama_aplikasi %>" required>
+          </div>
+          <div class="form-group">
+            <label>Nama Instansi / Pengelola</label>
+            <input type="text" name="nama_instansi" class="form-control" value="<%= appConfig.nama_instansi %>" required>
+          </div>
+          <div class="form-group">
+            <label>Logo</label>
+            <input type="file" name="logo" class="form-control-file" accept="image/*">
+            <% if (appConfig.logo_url) { %>
+              <div class="mt-2 d-flex align-items-center">
+                <img src="<%= appConfig.logo_url %>" alt="Logo saat ini" class="img-fluid rounded border bg-white" style="max-width: 80px; max-height: 80px;">
+                <div class="text-muted small ml-3">Logo ini akan dipakai di website publik, dashboard, dan kwitansi.</div>
+              </div>
+            <% } %>
+          </div>
+          <div class="form-group">
+            <label>Alamat Loket</label>
+            <textarea name="alamat_loket" class="form-control" rows="3"><%= appConfig.alamat_loket %></textarea>
+          </div>
+          <div class="form-group">
+            <label>No. WhatsApp Loket</label>
+            <input type="text" name="no_whatsapp_loket" class="form-control" value="<%= appConfig.no_whatsapp_loket %>">
+          </div>
+          <div class="form-group">
+            <label>Base URL Publik</label>
+            <input type="url" name="base_url_public" class="form-control" value="<%= appConfig.base_url_public %>" placeholder="https://domain-anda.com">
+            <small class="text-muted">Dipakai untuk link notifikasi WA dan akses publik. Kosongkan untuk fallback ke `.env`.</small>
+          </div>
+          <div class="form-group">
+            <label>Footer Kwitansi</label>
+            <textarea name="footer_kwitansi" class="form-control" rows="3"><%= appConfig.footer_kwitansi %></textarea>
+          </div>
+          <hr>
+          <div class="h6 mb-2">Konten Website Publik (/)</div>
+          <div class="form-group">
+            <label>Headline Beranda</label>
+            <input type="text" name="public_home_headline" class="form-control" value="<%= appConfig.public_home_headline || '' %>" placeholder="Contoh: Informasi PAMSIMAS">
+          </div>
+          <div class="form-group">
+            <label>Tagline Beranda</label>
+            <input type="text" name="public_home_tagline" class="form-control" value="<%= appConfig.public_home_tagline || '' %>" placeholder="Contoh: Cek tarif, jadwal pencatatan, dan pembayaran tagihan.">
+          </div>
+          <div class="form-group">
+            <label>Profil / Tentang PAMSIMAS</label>
+            <textarea name="public_profile_text" class="form-control" rows="4" placeholder="Teks profil singkat, sejarah, visi misi, atau informasi pengelola."><%= appConfig.public_profile_text || '' %></textarea>
+          </div>
+          <div class="form-group">
+            <label>Info Pembayaran</label>
+            <textarea name="public_payment_info_text" class="form-control" rows="4" placeholder="Contoh: pembayaran bisa melalui loket, QRIS, jam pelayanan, atau ketentuan pembayaran."><%= appConfig.public_payment_info_text || '' %></textarea>
+          </div>
+          <div class="form-group">
+            <label>Jam Layanan</label>
+            <textarea name="public_service_hours_text" class="form-control" rows="3" placeholder="Contoh: Senin–Jumat 08:00–15:00, Sabtu 08:00–12:00"><%= appConfig.public_service_hours_text || '' %></textarea>
+          </div>
+          <hr>
+          <div class="form-group form-check">
+            <input type="checkbox" class="form-check-input" id="qris_static_enabled" name="qris_static_enabled" value="1" <%= appConfig.qris_static_enabled ? 'checked' : '' %>>
+            <label class="form-check-label" for="qris_static_enabled">Aktifkan QRIS Statik</label>
+          </div>
+          <div class="form-group">
+            <label>QRIS Payload String</label>
+            <textarea name="qris_static_payload" class="form-control" rows="3" placeholder="Opsional. Jika diisi, QRIS akan bisa di-render langsung dari string payload."><%= appConfig.qris_static_payload || '' %></textarea>
+            <small class="text-muted">Bisa dikosongkan jika hanya ingin memakai gambar QRIS statik.</small>
+          </div>
+          <div class="form-group">
+            <label>Upload Gambar QRIS Statik</label>
+            <input type="file" name="qris_static_qr" class="form-control-file" accept="image/*">
+            <% if (appConfig.qris_static_qr_url) { %>
+              <div class="mt-2">
+                <img src="<%= appConfig.qris_static_qr_url %>" alt="QRIS saat ini" class="img-fluid rounded border" style="max-width: 220px;">
+              </div>
+            <% } %>
+          </div>
+          <div class="form-group">
+            <label>No. WhatsApp Admin QRIS</label>
+            <input type="text" name="qris_admin_wa" class="form-control" value="<%= appConfig.qris_admin_wa || '' %>" placeholder="Contoh: 08123456789">
+            <small class="text-muted">Dipakai untuk konfirmasi bukti bayar via Baileys atau link WhatsApp.</small>
+          </div>
+          <div class="form-group">
+            <label>Bantuan di Halaman QRIS</label>
+            <textarea name="qris_help_text" class="form-control" rows="3"><%= appConfig.qris_help_text || '' %></textarea>
+          </div>
+          <div class="form-group">
+            <label>Token Webhook Macrodroid</label>
+            <input type="text" name="qris_webhook_token" class="form-control" value="<%= appConfig.qris_webhook_token || '' %>" placeholder="Isi token acak (wajib jika ingin auto-konfirmasi)">
+            <small class="text-muted">Endpoint: <span class="font-weight-bold"><%= (appConfig?.resolved_base_url || '') %>/api/qris/macrodroid</span> (Header: <span class="font-weight-bold">X-Webhook-Token</span>)</small>
+          </div>
+          <div class="form-group">
+            <label>Window Pencocokan (menit)</label>
+            <input type="number" name="qris_match_window_minutes" class="form-control" value="<%= appConfig.qris_match_window_minutes || 1440 %>" min="5" max="10080">
+            <small class="text-muted">Membatasi pencarian tagihan QRIS yang baru dibuat (mengurangi risiko salah match).</small>
+          </div>
+          <div class="form-group form-check">
+            <input type="checkbox" class="form-check-input" id="qris_send_wa_image" name="qris_send_wa_image" value="1" <%= appConfig.qris_send_wa_image ? 'checked' : '' %>>
+            <label class="form-check-label" for="qris_send_wa_image">Kirim gambar QRIS via WhatsApp saat tagihan terbit</label>
+          </div>
+          <div class="form-group">
+            <label>Template WhatsApp QRIS (Tagihan)</label>
+            <textarea name="wa_template_qris_tagihan" class="form-control" rows="6"><%= appConfig.wa_template_qris_tagihan || '' %></textarea>
+          </div>
+          <button type="submit" class="btn btn-info">Simpan Pengaturan Aplikasi</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card card-primary">
+      <div class="card-header"><h3 class="card-title">Parameter Tarif</h3></div>
+      <div class="card-body">
+        <form action="/admin/pengaturan" method="post">
+          <input type="hidden" name="id" value="<%= settings.id %>">
+          <input type="hidden" name="redirect_to" value="/admin/pengaturan">
+          <div class="alert alert-light border">
+            <div><strong>Window input catter:</strong> tanggal <%= collectionWindow.startDay %> - <%= collectionWindow.endDay %></div>
+            <div><strong>Generate otomatis:</strong> mulai tanggal <%= autoGenerateDay %> untuk tagihan bulan berikutnya</div>
+          </div>
+          <div class="form-group">
+            <label>Harga per Kubik</label>
+            <input type="number" name="harga_per_kubik" class="form-control" value="<%= settings.harga_per_kubik %>" required>
+          </div>
+          <div class="form-group">
+            <label>Minimum Pemakaian Ditagih (Kubik)</label>
+            <input type="number" name="minimum_pemakaian_kubik" class="form-control" value="<%= settings.minimum_pemakaian_kubik ?? 5 %>" min="0" step="0.01" required>
+            <small class="text-muted">Mode abonement. Jika pelanggan memakai di bawah angka ini, biaya air tetap dihitung sebesar minimum kubik ini. Isi `0` untuk menonaktifkan minimum abonement.</small>
+          </div>
+          <div class="form-group">
+            <label>Biaya Admin</label>
+            <input type="number" name="biaya_admin" class="form-control" value="<%= settings.biaya_admin %>" required>
+          </div>
+          <div class="form-group">
+            <label>Denda Keterlambatan</label>
+            <input type="number" name="denda_keterlambatan" class="form-control" value="<%= settings.denda_keterlambatan %>" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group col-md-4">
+              <label>Tanggal Mulai Input</label>
+              <input type="number" name="tanggal_mulai_pencatatan" class="form-control" value="<%= settings.tanggal_mulai_pencatatan ?? 1 %>" min="1" max="31" required>
+            </div>
+            <div class="form-group col-md-4">
+              <label>Tanggal Akhir Input</label>
+              <input type="number" name="tanggal_akhir_pencatatan" class="form-control" value="<%= settings.tanggal_akhir_pencatatan ?? 25 %>" min="1" max="31" required>
+            </div>
+            <div class="form-group col-md-4">
+              <label>Tanggal Generate Otomatis</label>
+              <input type="number" name="tanggal_generate_otomatis" class="form-control" value="<%= settings.tanggal_generate_otomatis ?? 1 %>" min="1" max="31" required>
+            </div>
+          </div>
+          <small class="text-muted d-block mb-3">Contoh alur: catter input tanggal 1-25, lalu sistem membuat tagihan bulan berikutnya mulai tanggal generate otomatis.</small>
+          <button type="submit" class="btn btn-primary">Simpan Pengaturan</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card card-success">
+      <div class="card-header"><h3 class="card-title">Generate Tagihan Manual</h3></div>
+      <div class="card-body">
+        <form action="/admin/tagihan/generate" method="post">
+          <input type="hidden" name="redirect_to" value="/admin/pengaturan">
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label>Bulan Pencatatan</label>
+              <input type="number" name="source_month" class="form-control" min="1" max="12" value="<%= generationDefaults.sourcePeriod.bulan %>" required>
+            </div>
+            <div class="form-group col-md-6">
+              <label>Tahun Pencatatan</label>
+              <input type="number" name="source_year" class="form-control" min="2000" max="3000" value="<%= generationDefaults.sourcePeriod.tahun %>" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label>Bulan Tagihan</label>
+              <input type="number" name="billing_month" class="form-control" min="1" max="12" value="<%= generationDefaults.billingPeriod.bulan %>" required>
+            </div>
+            <div class="form-group col-md-6">
+              <label>Tahun Tagihan</label>
+              <input type="number" name="billing_year" class="form-control" min="2000" max="3000" value="<%= generationDefaults.billingPeriod.tahun %>" required>
+            </div>
+          </div>
+          <div class="alert alert-light border">
+            <div><strong>Default saat ini:</strong> baca <%= generationDefaults.sourcePeriod.bulan %>/<%= generationDefaults.sourcePeriod.tahun %> menjadi tagihan <%= generationDefaults.billingPeriod.bulan %>/<%= generationDefaults.billingPeriod.tahun %>.</div>
+            <div><strong>Opsi berikutnya:</strong> <%= generationDefaults.nextPeriod.bulan %>/<%= generationDefaults.nextPeriod.tahun %></div>
+          </div>
+          <button type="submit" class="btn btn-success">Generate Tagihan Manual</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card card-danger">
+      <div class="card-header"><h3 class="card-title">Input Pengeluaran</h3></div>
+      <div class="card-body">
+        <form action="/admin/pengeluaran" method="post">
+          <div class="form-group">
+            <label>Tanggal</label>
+            <input type="date" name="tanggal" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Jumlah</label>
+            <input type="number" name="jumlah" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label>Keterangan</label>
+            <textarea name="keterangan" class="form-control" rows="3" required></textarea>
+          </div>
+          <button type="submit" class="btn btn-danger">Catat Pengeluaran</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><h3 class="card-title">Riwayat Keuangan</h3></div>
+  <div class="card-body table-responsive p-0">
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Tanggal</th>
+          <th>Tipe</th>
+          <th>Keterangan</th>
+          <th>Jumlah</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% financeEntries.forEach((item) => { %>
+          <tr>
+            <td><%= helpers.formatDate(item.tanggal) %></td>
+            <td><span class="badge badge-<%= item.tipe === 'pemasukan' ? 'success' : 'danger' %>"><%= item.tipe %></span></td>
+            <td><%= item.keterangan %></td>
+            <td><%= helpers.formatCurrency(item.jumlah) %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card mt-3">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h3 class="card-title mb-0">Log Notifikasi QRIS (Macrodroid)</h3>
+    <form action="/admin/pengaturan" method="get" class="form-inline">
+      <select name="qris_status" class="form-control form-control-sm mr-2">
+        <option value="all" <%= qrisStatus === 'all' ? 'selected' : '' %>>Semua</option>
+        <option value="matched" <%= qrisStatus === 'matched' ? 'selected' : '' %>>Matched</option>
+        <option value="ignored" <%= qrisStatus === 'ignored' ? 'selected' : '' %>>Ignored</option>
+        <option value="failed" <%= qrisStatus === 'failed' ? 'selected' : '' %>>Failed</option>
+      </select>
+      <button type="submit" class="btn btn-sm btn-outline-primary">Filter</button>
+    </form>
+  </div>
+  <div class="card-body table-responsive p-0">
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Waktu</th>
+          <th>Status</th>
+          <th>Nominal</th>
+          <th>Tagihan Match</th>
+          <th>Sumber</th>
+          <th>Keterangan</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (qrisNotifLogs.length) { %>
+          <% qrisNotifLogs.forEach((item) => { %>
+            <tr>
+              <td><%= helpers.formatDate(item.received_at) %></td>
+              <td>
+                <span class="badge badge-<%= item.match_status === 'matched' ? 'success' : (item.match_status === 'ignored' ? 'warning' : 'danger') %>">
+                  <%= item.match_status %>
+                </span>
+              </td>
+              <td><%= item.amount_detected ? helpers.formatCurrency(item.amount_detected) : '-' %></td>
+              <td>
+                <% if (item.matched_tagihan_id) { %>
+                  <strong><%= item.nama %></strong><br>
+                  <small class="text-muted"><%= item.no_meteran %> | <%= item.bulan %>/<%= item.tahun %></small>
+                <% } else { %>
+                  -
+                <% } %>
+              </td>
+              <td><%= item.source %><br><small class="text-muted"><%= item.sender || '-' %></small></td>
+              <td>
+                <div><%= item.match_reason || '-' %></div>
+                <% if (item.message_text) { %>
+                  <small class="text-muted"><%= item.message_text.slice(0, 120) %><%= item.message_text.length > 120 ? '...' : '' %></small>
+                <% } %>
+              </td>
+              <td>
+                <% if (item.match_status !== 'matched' && item.amount_detected) { %>
+                  <form action="/admin/qris-log/<%= item.id %>/retry" method="post">
+                    <button type="submit" class="btn btn-sm btn-outline-primary">Retry Match</button>
+                  </form>
+                <% } else { %>
+                  <span class="text-muted">-</span>
+                <% } %>
+              </td>
+            </tr>
+          <% }) %>
+        <% } else { %>
+          <tr>
+            <td colspan="7" class="text-center text-muted py-4">Belum ada log notifikasi QRIS.</td>
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- include('../partials/admin-footer') %>

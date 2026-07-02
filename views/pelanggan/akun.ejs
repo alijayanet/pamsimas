@@ -1,0 +1,95 @@
+<%- include('../partials/public-header', { title, bodyClass: 'pelanggan-app', containerClass: 'container pelanggan-shell' }) %>
+
+<div class="pelanggan-hero">
+  <div class="d-flex align-items-start">
+    <% if (appConfig?.logo_url) { %>
+      <img src="<%= appConfig.logo_url %>" alt="Logo" class="pelanggan-logo mr-3">
+    <% } %>
+    <div>
+      <div class="pelanggan-hero-muted mb-2">Akun Pelanggan</div>
+      <h3 class="mb-1"><%= pelanggan.nama %></h3>
+      <div class="pelanggan-hero-muted">Informasi akun dan ringkasan pelanggan.</div>
+    </div>
+  </div>
+</div>
+
+<div class="pelanggan-card bg-white p-3 p-md-4 mb-3">
+  <div class="pelanggan-section-title">Informasi Pelanggan</div>
+  <div class="row">
+    <div class="col-md-6 mb-3">
+      <div class="text-muted small">No. Meter</div>
+      <div class="font-weight-bold"><%= pelanggan.no_meteran %></div>
+    </div>
+    <div class="col-md-6 mb-3">
+      <div class="text-muted small">Username</div>
+      <div class="font-weight-bold"><%= pelanggan.username || '-' %></div>
+    </div>
+    <div class="col-md-6 mb-3">
+      <div class="text-muted small">No. WhatsApp</div>
+      <div class="font-weight-bold"><%= pelanggan.no_whatsapp || '-' %></div>
+    </div>
+    <div class="col-md-6 mb-3">
+      <div class="text-muted small">Tanggal Bergabung</div>
+      <div class="font-weight-bold"><%= pelanggan.tgl_bergabung ? helpers.formatDate(pelanggan.tgl_bergabung) : '-' %></div>
+    </div>
+    <div class="col-12">
+      <div class="text-muted small">Alamat</div>
+      <div class="font-weight-bold"><%= pelanggan.alamat %></div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-6 col-md-3 mb-3">
+    <div class="pelanggan-stat-card">
+      <div class="pelanggan-stat-label">Total Tagihan</div>
+      <div class="pelanggan-stat-value"><%= summary.totalTagihan %></div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3 mb-3">
+    <div class="pelanggan-stat-card">
+      <div class="pelanggan-stat-label">Belum Bayar</div>
+      <div class="pelanggan-stat-value text-warning"><%= summary.belumBayar %></div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3 mb-3">
+    <div class="pelanggan-stat-card">
+      <div class="pelanggan-stat-label">Sudah Lunas</div>
+      <div class="pelanggan-stat-value text-success"><%= summary.sudahLunas %></div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3 mb-3">
+    <div class="pelanggan-stat-card">
+      <div class="pelanggan-stat-label">Total Terbayar</div>
+      <div class="pelanggan-stat-value"><%= helpers.formatCurrency(summary.totalTerbayar) %></div>
+    </div>
+  </div>
+</div>
+
+<div class="pelanggan-card bg-white p-3 p-md-4">
+  <div class="pelanggan-section-title">Keamanan Akses</div>
+  <p class="text-muted">Ubah password secara berkala dan logout jika perangkat ini dipakai bersama.</p>
+  <form action="/pelanggan/akun/password" method="post" class="mb-4">
+    <div class="row">
+      <div class="col-md-4 form-group">
+        <label>Password Lama</label>
+        <input type="password" name="current_password" class="form-control" required>
+      </div>
+      <div class="col-md-4 form-group">
+        <label>Password Baru</label>
+        <input type="password" name="new_password" class="form-control" minlength="6" required>
+      </div>
+      <div class="col-md-4 form-group">
+        <label>Konfirmasi Password Baru</label>
+        <input type="password" name="confirm_password" class="form-control" minlength="6" required>
+      </div>
+    </div>
+    <button type="submit" class="btn btn-primary">Simpan Password Baru</button>
+  </form>
+  <form action="/pelanggan/logout" method="post">
+    <button type="submit" class="btn btn-outline-danger">Logout Pelanggan</button>
+  </form>
+</div>
+
+<%- include('../partials/pelanggan-bottom-nav', { activeTab }) %>
+<%- include('../partials/public-footer') %>

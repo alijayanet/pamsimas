@@ -1,0 +1,44 @@
+<%- include('../partials/public-header', { title, bodyClass: 'pelanggan-app', containerClass: 'container pelanggan-auth-shell py-4', showFlash: false }) %>
+
+<div class="row justify-content-center w-100 mx-0">
+  <div class="col-md-6 col-lg-5">
+    <div class="card pelanggan-auth-card">
+      <div class="card-body p-4 p-md-5">
+        <% if (flash) { %>
+          <div class="alert alert-<%= flash.type %>"><%= flash.message %></div>
+        <% } %>
+        <div class="text-center mb-4">
+          <div class="mb-3">
+            <% if (appConfig?.logo_url) { %>
+              <img src="<%= appConfig.logo_url %>" alt="Logo" class="auth-logo">
+            <% } else { %>
+              <span class="btn btn-primary rounded-circle" style="width: 56px; height: 56px; pointer-events: none;">
+                <i class="fas fa-tint mt-2"></i>
+              </span>
+            <% } %>
+          </div>
+          <h3 class="mb-1">Login Pelanggan</h3>
+          <div class="text-muted">Masuk untuk melihat riwayat pembayaran dan bayar tagihan dari dashboard.</div>
+        </div>
+
+        <form action="/pelanggan/login" method="post">
+          <div class="form-group">
+            <label>Username</label>
+            <input type="text" name="username" class="form-control" placeholder="Masukkan username pelanggan" required>
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" name="password" class="form-control" placeholder="Masukkan password" required>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block btn-lg">Masuk Dashboard</button>
+        </form>
+
+        <div class="text-center mt-4">
+          <a href="/pelanggan/cek" class="text-muted">Atau cek tagihan tanpa login</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/public-footer') %>

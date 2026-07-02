@@ -1,0 +1,15 @@
+<%- include('../partials/public-header', { title }) %>
+
+<div class="row justify-content-center">
+  <div class="col-md-7">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body p-4">
+        <h3 class="text-danger mb-3">Terjadi Kesalahan</h3>
+        <p class="mb-3"><%= message %></p>
+        <a href="javascript:history.back()" class="btn btn-outline-secondary">Kembali</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/public-footer') %>

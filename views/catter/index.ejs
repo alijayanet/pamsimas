@@ -1,0 +1,142 @@
+<%- include('../partials/admin-header', { title, activeMenu: 'catter' }) %>
+
+<div class="row">
+  <div class="col-lg-5">
+    <div class="card mobile-card">
+      <div class="card-header"><h3 class="card-title">Cari Pelanggan</h3></div>
+      <div class="card-body">
+        <form action="/catter" method="get" class="mb-3">
+          <div class="input-group">
+            <input type="text" name="keyword" class="form-control" placeholder="No meter / nama" value="<%= keyword %>">
+            <div class="input-group-append">
+              <button class="btn btn-primary" type="submit">Cari</button>
+            </div>
+          </div>
+        </form>
+
+        <% if (results.length) { %>
+          <div class="list-group">
+            <% results.forEach((item) => { %>
+              <a href="/catter?keyword=<%= encodeURIComponent(keyword) %>&pelanggan_id=<%= item.id %>" class="list-group-item list-group-item-action">
+                <strong><%= item.nama %></strong><br>
+                <small><%= item.no_meteran %> - <%= item.alamat %></small>
+              </a>
+            <% }) %>
+          </div>
+        <% } else if (keyword) { %>
+          <p class="text-muted mb-0">Pelanggan tidak ditemukan.</p>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-7">
+    <div class="card mobile-card">
+      <div class="card-header"><h3 class="card-title">Input Meteran Bulanan</h3></div>
+      <div class="card-body">
+        <div class="alert alert-<%= isCollectionWindowOpen ? 'success' : (canBypassWindow ? 'warning' : 'danger') %>">
+          <strong>Window Input Meter:</strong> tanggal <%= collectionWindow.startDay %> sampai <%= collectionWindow.endDay %>.
+          <% if (!isCollectionWindowOpen && !canBypassWindow) { %>
+            Di luar jadwal input. Tagihan akan digenerate otomatis pada tanggal berikutnya sesuai pengaturan admin.
+          <% } else if (!isCollectionWindowOpen && canBypassWindow) { %>
+            Admin masih bisa input di luar jadwal untuk koreksi data.
+          <% } else { %>
+            Data pemakaian periode ini akan dipakai untuk tagihan bulan berikutnya.
+          <% } %>
+        </div>
+        <% if (selectedPelanggan) { %>
+          <div class="alert alert-info">
+            <strong><%= selectedPelanggan.nama %></strong><br>
+            No meter: <%= selectedPelanggan.no_meteran %> | WA: <%= selectedPelanggan.no_whatsapp || '-' %>
+          </div>
+          <form action="/catter/meteran" method="post" enctype="multipart/form-data">
+            <input type="hidden" name="pelanggan_id" value="<%= selectedPelanggan.id %>">
+            <div class="row">
+              <div class="col-md-6 form-group">
+                <label>Bulan</label>
+                <input type="number" name="bulan" class="form-control" value="<%= month %>" min="1" max="12" required>
+              </div>
+              <div class="col-md-6 form-group">
+                <label>Tahun</label>
+                <input type="number" name="tahun" class="form-control" value="<%= year %>" required>
+              </div>
+              <div class="col-md-6 form-group">
+                <label>Meteran Awal</label>
+                <input type="number" name="meteran_awal" class="form-control" value="<%= meteranAwal %>" readonly>
+              </div>
+              <div class="col-md-6 form-group">
+                <label>Meteran Akhir</label>
+                <input type="number" name="meteran_akhir" class="form-control" min="<%= meteranAwal %>" required>
+              </div>
+              <div class="col-md-6 form-group">
+                <label>Status Input</label>
+                <select name="status_input" class="form-control">
+                  <option value="pending">Pending</option>
+                  <option value="verified">Verified</option>
+                </select>
+              </div>
+              <div class="col-md-6 form-group">
+                <label>Foto Bukti Meteran</label>
+                <input type="file" name="foto_bukti" accept="image/*" capture="environment" class="form-control-file">
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Simpan Pencatatan</button>
+          </form>
+        <% } else { %>
+          <p class="text-muted mb-0">Pilih pelanggan dari hasil pencarian untuk mulai input meteran.</p>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card mt-3">
+  <div class="card-header"><h3 class="card-title">Riwayat Input Bulan Berjalan</h3></div>
+  <div class="card-body table-responsive p-0">
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Pelanggan</th>
+          <th>Periode</th>
+          <th>Awal</th>
+          <th>Akhir</th>
+          <th>Kubik</th>
+          <th>Status</th>
+          <th>Tagihan</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% history.forEach((item) => { %>
+          <tr>
+            <td><%= item.nama %><br><small class="text-muted"><%= item.no_meteran %></small></td>
+            <td><%= item.bulan %>/<%= item.tahun %></td>
+            <td><%= item.meteran_awal %></td>
+            <td><%= item.meteran_akhir %></td>
+            <td><%= item.total_kubik %></td>
+            <td><span class="badge badge-<%= item.status_input === 'verified' ? 'success' : 'warning' %>"><%= item.status_input %></span></td>
+            <td>
+              <% if (item.tagihan_id) { %>
+                <span class="badge badge-<%= item.tagihan_status_bayar === 'lunas' ? 'success' : 'warning' %>"><%= item.tagihan_status_bayar %></span>
+              <% } else { %>
+                <span class="text-muted">belum dibuat</span>
+              <% } %>
+            </td>
+            <td class="text-nowrap">
+              <div class="d-flex flex-wrap" style="gap:6px;">
+                <a href="/catter/pencatatan/<%= item.id %>/edit" class="btn btn-sm btn-outline-primary">Edit</a>
+                <% if (!item.tagihan_id) { %>
+                  <form action="/catter/pencatatan/<%= item.id %>/delete" method="post" class="d-inline">
+                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Hapus pencatatan ini?')">Hapus</button>
+                  </form>
+                <% } %>
+              </div>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- include('../partials/admin-footer') %>

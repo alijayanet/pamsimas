@@ -1,0 +1,52 @@
+  </div>
+  <div class="modal fade" id="meterPhotoPreviewModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+      <div class="modal-content meter-photo-modal">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title">Preview Foto Meter</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Tutup">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body pt-2">
+          <img src="" alt="Preview foto meter" class="meter-photo-preview-image" id="meterPhotoPreviewImage">
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="/vendor/jquery/dist/jquery.min.js"></script>
+  <script src="/vendor/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    (function () {
+      var modalEl = document.getElementById('meterPhotoPreviewModal');
+      var previewImage = document.getElementById('meterPhotoPreviewImage');
+
+      if (!modalEl || !previewImage) {
+        return;
+      }
+
+      document.addEventListener('click', function (event) {
+        var trigger = event.target.closest('[data-meter-preview]');
+        if (!trigger) {
+          return;
+        }
+
+        event.preventDefault();
+
+        var imageUrl = trigger.getAttribute('href') || trigger.dataset.imageUrl || '';
+        if (!imageUrl) {
+          return;
+        }
+
+        previewImage.src = imageUrl;
+        previewImage.alt = trigger.dataset.title || 'Preview foto meter';
+        $('#meterPhotoPreviewModal').modal('show');
+      });
+
+      $('#meterPhotoPreviewModal').on('hidden.bs.modal', function () {
+        previewImage.src = '';
+      });
+    })();
+  </script>
+</body>
+</html>

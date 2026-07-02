@@ -1,0 +1,306 @@
+<%- include('../partials/public-header', { title, bodyClass: 'pelanggan-app', containerClass: 'container pelanggan-shell' }) %>
+
+<div class="pelanggan-hero">
+  <div class="d-flex justify-content-between align-items-start flex-wrap">
+    <div class="d-flex align-items-start">
+      <% if (appConfig?.logo_url) { %>
+        <img src="<%= appConfig.logo_url %>" alt="Logo" class="pelanggan-logo mr-3">
+      <% } %>
+      <div>
+      <div class="pelanggan-hero-muted mb-2">Dashboard Pelanggan</div>
+      <h3 class="mb-1"><%= pelanggan.nama %></h3>
+      <div class="pelanggan-hero-muted">No. Meter <strong><%= pelanggan.no_meteran %></strong></div>
+      </div>
+    </div>
+    <div class="text-md-right mt-3 mt-md-0">
+      <div class="small pelanggan-hero-muted">Status Tagihan</div>
+      <div class="h5 mb-0"><%= unpaidBills.length ? `${unpaidBills.length} belum dibayar` : 'Semua lunas' %></div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-6 col-md-3 mb-3">
+    <div class="pelanggan-stat-card">
+      <div class="pelanggan-stat-label">Total Tagihan</div>
+      <div class="pelanggan-stat-value"><%= summary.totalTagihan %></div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3 mb-3">
+    <div class="pelanggan-stat-card">
+      <div class="pelanggan-stat-label">Belum Bayar</div>
+      <div class="pelanggan-stat-value text-warning"><%= summary.belumBayar %></div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3 mb-3">
+    <div class="pelanggan-stat-card">
+      <div class="pelanggan-stat-label">Sudah Lunas</div>
+      <div class="pelanggan-stat-value text-success"><%= summary.sudahLunas %></div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3 mb-3">
+    <div class="pelanggan-stat-card">
+      <div class="pelanggan-stat-label">Tunggakan</div>
+      <div class="pelanggan-stat-value"><%= helpers.formatCurrency(summary.totalTertunggak) %></div>
+    </div>
+  </div>
+</div>
+
+<div class="pelanggan-card bg-white p-3 p-md-4 mb-3">
+  <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
+    <div class="pelanggan-section-title mb-0">Catatan Pemakaian Terakhir</div>
+    <div class="small text-muted">Tarif aktif <%= helpers.formatCurrency(pricing.harga_per_kubik) %> / m3</div>
+  </div>
+  <% if (!latestUsageNote) { %>
+    <div class="pelanggan-empty-state">
+      <h5 class="mb-2">Belum ada catatan pemakaian</h5>
+      <div class="text-muted">Catatan akan muncul setelah petugas melakukan input meteran.</div>
+    </div>
+  <% } else { %>
+    <div class="pelanggan-detail-grid">
+      <div class="pelanggan-detail-item">
+        <div class="pelanggan-detail-label">Periode Terakhir</div>
+        <div class="pelanggan-detail-value"><%= latestUsageNote.periode %></div>
+      </div>
+      <div class="pelanggan-detail-item">
+        <div class="pelanggan-detail-label">Status Tagihan</div>
+        <div class="pelanggan-detail-value"><%= latestUsageNote.statusBayar %></div>
+      </div>
+      <div class="pelanggan-detail-item">
+        <div class="pelanggan-detail-label">Meter Awal</div>
+        <div class="pelanggan-detail-value"><%= latestUsageNote.meterAwal %></div>
+      </div>
+      <div class="pelanggan-detail-item">
+        <div class="pelanggan-detail-label">Meter Akhir</div>
+        <div class="pelanggan-detail-value"><%= latestUsageNote.meterAkhir %></div>
+      </div>
+      <div class="pelanggan-detail-item">
+        <div class="pelanggan-detail-label">Air Dipakai</div>
+        <div class="pelanggan-detail-value"><%= latestUsageNote.totalKubik %> m3</div>
+      </div>
+      <div class="pelanggan-detail-item">
+        <div class="pelanggan-detail-label">Kubik Ditagih</div>
+        <div class="pelanggan-detail-value"><%= latestUsageNote.kubikDitagihkan %> m3</div>
+      </div>
+      <div class="pelanggan-detail-item">
+        <div class="pelanggan-detail-label">Harga per m3</div>
+        <div class="pelanggan-detail-value"><%= helpers.formatCurrency(latestUsageNote.hargaPerKubik) %></div>
+      </div>
+      <div class="pelanggan-detail-item">
+        <div class="pelanggan-detail-label">Minimum Abonement</div>
+        <div class="pelanggan-detail-value"><%= latestUsageNote.minimumPemakaianKubik %> m3</div>
+      </div>
+      <div class="pelanggan-detail-item">
+        <div class="pelanggan-detail-label">Biaya Air</div>
+        <div class="pelanggan-detail-value"><%= helpers.formatCurrency(latestUsageNote.biayaAir) %></div>
+      </div>
+      <div class="pelanggan-detail-item">
+        <div class="pelanggan-detail-label">Biaya Admin</div>
+        <div class="pelanggan-detail-value"><%= helpers.formatCurrency(latestUsageNote.biayaAdmin) %></div>
+      </div>
+      <div class="pelanggan-detail-item">
+        <div class="pelanggan-detail-label">Denda</div>
+        <div class="pelanggan-detail-value"><%= helpers.formatCurrency(latestUsageNote.denda) %></div>
+      </div>
+      <div class="pelanggan-detail-item">
+        <div class="pelanggan-detail-label">Total Tagihan</div>
+        <div class="pelanggan-detail-value"><%= helpers.formatCurrency(latestUsageNote.totalTagihan) %></div>
+      </div>
+      <div class="pelanggan-detail-item">
+        <div class="pelanggan-detail-label">Metode Bayar Terakhir</div>
+        <div class="pelanggan-detail-value"><%= latestUsageNote.metodeBayar %></div>
+      </div>
+      <div class="pelanggan-detail-item">
+        <div class="pelanggan-detail-label">Tanggal Bayar</div>
+        <div class="pelanggan-detail-value"><%= latestUsageNote.tanggalBayar ? helpers.formatDate(latestUsageNote.tanggalBayar) : '-' %></div>
+      </div>
+    </div>
+    <% if (latestUsageNote.abonemenApplied) { %>
+      <div class="alert alert-info mt-3 mb-0">Pemakaian asli bulan ini <strong><%= latestUsageNote.totalKubik %> m3</strong>, namun ditagihkan minimum abonement <strong><%= latestUsageNote.kubikDitagihkan %> m3</strong>.</div>
+    <% } %>
+  <% } %>
+</div>
+
+<div class="pelanggan-card bg-white p-3 p-md-4 mb-3">
+  <div class="pelanggan-section-title">Aksi Cepat</div>
+  <div class="pelanggan-action-grid">
+    <a href="/pelanggan/tagihan" class="btn btn-primary btn-lg text-left">
+      <i class="fas fa-wallet mr-2"></i> Bayar Tagihan
+    </a>
+    <a href="/pelanggan/riwayat" class="btn btn-outline-primary btn-lg text-left">
+      <i class="fas fa-receipt mr-2"></i> Lihat Riwayat
+    </a>
+  </div>
+</div>
+
+<div class="pelanggan-card bg-white p-3 p-md-4 mb-3">
+  <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
+    <div class="pelanggan-section-title mb-0">Grafik 6 Periode Terakhir</div>
+    <div class="small text-muted">Pemakaian dan nominal tagihan</div>
+  </div>
+  <% if (!usageChart.labels.length) { %>
+    <div class="pelanggan-empty-state">
+      <h5 class="mb-2">Belum ada data grafik</h5>
+      <div class="text-muted">Grafik akan muncul setelah ada pencatatan meter dan tagihan.</div>
+    </div>
+  <% } else { %>
+    <div class="pelanggan-chart-wrap">
+      <canvas id="pelangganUsageChart"></canvas>
+    </div>
+    <script type="application/json" id="pelanggan-usage-chart-data"><%- JSON.stringify(usageChart) %></script>
+  <% } %>
+</div>
+
+<div class="pelanggan-card bg-white p-3 p-md-4 mb-3">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="pelanggan-section-title mb-0">Tagihan Aktif</div>
+    <a href="/pelanggan/tagihan" class="small">Lihat semua</a>
+  </div>
+
+  <% if (!unpaidBills.length) { %>
+    <div class="pelanggan-empty-state">
+      <h5 class="mb-2">Tidak ada tagihan aktif</h5>
+      <div class="text-muted">Semua tagihan Anda saat ini sudah lunas.</div>
+    </div>
+  <% } else { %>
+    <% unpaidBills.slice(0, 3).forEach((bill) => { %>
+      <div class="pelanggan-list-item">
+        <div class="d-flex justify-content-between align-items-start flex-wrap mb-2">
+          <div>
+            <div class="font-weight-bold"><%= helpers.monthName(bill.bulan) %> <%= bill.tahun %></div>
+            <div class="text-muted small"><%= bill.total_kubik %> m3 • Meter <%= bill.meteran_awal %> - <%= bill.meteran_akhir %></div>
+          </div>
+          <span class="pelanggan-pill unpaid">Belum Bayar</span>
+        </div>
+        <div class="d-flex justify-content-between align-items-center flex-wrap">
+          <div class="h5 mb-2 mb-md-0"><%= helpers.formatCurrency(bill.total_tagihan) %></div>
+          <% if (qrisEnabled) { %>
+            <a href="/pelanggan/tagihan/<%= bill.id %>/qris" class="btn btn-success">Bayar Sekarang</a>
+          <% } %>
+        </div>
+        <% if (bill.foto_bukti) { %>
+          <div class="mt-3">
+            <a href="<%= bill.foto_bukti %>" class="meter-photo-link" data-meter-preview data-title="Foto meter <%= bill.bulan %>/<%= bill.tahun %>">
+              <img src="<%= bill.foto_bukti %>" alt="Foto meter <%= bill.bulan %>/<%= bill.tahun %>" class="meter-photo-thumb small">
+            </a>
+            <div class="meter-photo-caption">Foto meter yang diinput petugas untuk periode ini.</div>
+          </div>
+        <% } %>
+      </div>
+    <% }) %>
+  <% } %>
+</div>
+
+<div class="pelanggan-card bg-white p-3 p-md-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="pelanggan-section-title mb-0">Riwayat Pembayaran Terakhir</div>
+    <a href="/pelanggan/riwayat" class="small">Lihat semua</a>
+  </div>
+
+  <% if (!paidBills.length) { %>
+    <div class="text-muted">Belum ada riwayat pembayaran.</div>
+  <% } else { %>
+    <% paidBills.forEach((bill) => { %>
+      <div class="pelanggan-list-item">
+        <div class="d-flex justify-content-between align-items-start flex-wrap mb-2">
+          <div>
+            <div class="font-weight-bold"><%= helpers.monthName(bill.bulan) %> <%= bill.tahun %></div>
+            <div class="text-muted small">Dibayar <%= bill.tgl_bayar ? helpers.formatDate(bill.tgl_bayar) : '-' %></div>
+          </div>
+          <span class="pelanggan-pill paid">Lunas</span>
+        </div>
+        <div class="h6 mb-0"><%= helpers.formatCurrency(bill.total_tagihan) %></div>
+        <% if (bill.foto_bukti) { %>
+          <div class="mt-3">
+            <a href="<%= bill.foto_bukti %>" class="meter-photo-link" data-meter-preview data-title="Foto meter <%= bill.bulan %>/<%= bill.tahun %>">
+              <img src="<%= bill.foto_bukti %>" alt="Foto meter <%= bill.bulan %>/<%= bill.tahun %>" class="meter-photo-thumb small">
+            </a>
+            <div class="meter-photo-caption">Lihat foto meter hasil input petugas.</div>
+          </div>
+        <% } %>
+      </div>
+    <% }) %>
+  <% } %>
+</div>
+
+<% if (usageChart.labels.length) { %>
+  <script src="/vendor/chart.js/dist/chart.umd.js"></script>
+  <script>
+    (function () {
+      var dataEl = document.getElementById('pelanggan-usage-chart-data');
+      var canvas = document.getElementById('pelangganUsageChart');
+      if (!dataEl || !canvas || typeof Chart === 'undefined') {
+        return;
+      }
+
+      var chartData = JSON.parse(dataEl.textContent || '{}');
+      var ctx = canvas.getContext('2d');
+
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: chartData.labels || [],
+          datasets: [
+            {
+              type: 'bar',
+              label: 'Pemakaian (m3)',
+              data: chartData.usage || [],
+              backgroundColor: 'rgba(13, 110, 253, 0.22)',
+              borderColor: '#0d6efd',
+              borderWidth: 1.5,
+              yAxisID: 'y'
+            },
+            {
+              type: 'line',
+              label: 'Tagihan (Rp)',
+              data: chartData.amount || [],
+              borderColor: '#16a34a',
+              backgroundColor: 'rgba(22, 163, 74, 0.14)',
+              borderWidth: 2,
+              tension: 0.35,
+              fill: true,
+              yAxisID: 'y1'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            mode: 'index',
+            intersect: false
+          },
+          plugins: {
+            legend: {
+              position: 'bottom'
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'm3'
+              }
+            },
+            y1: {
+              beginAtZero: true,
+              position: 'right',
+              grid: {
+                drawOnChartArea: false
+              },
+              ticks: {
+                callback: function (value) {
+                  return 'Rp' + Number(value || 0).toLocaleString('id-ID');
+                }
+              }
+            }
+          }
+        }
+      });
+    })();
+  </script>
+<% } %>
+
+<%- include('../partials/pelanggan-bottom-nav', { activeTab }) %>
+<%- include('../partials/public-footer') %>

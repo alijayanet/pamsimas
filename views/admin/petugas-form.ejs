@@ -1,0 +1,31 @@
+<%- include('../partials/admin-header', { title, activeMenu: 'petugas' }) %>
+
+<div class="card card-primary">
+  <div class="card-body">
+    <form action="<%= formAction %>" method="post">
+      <div class="row">
+        <div class="col-md-6 form-group">
+          <label>Username</label>
+          <input type="text" name="username" class="form-control" value="<%= petugas?.username || '' %>" required>
+        </div>
+        <div class="col-md-6 form-group">
+          <label>Role</label>
+          <select name="role" class="form-control" required>
+            <option value="catter" <%= petugas?.role === 'catter' ? 'selected' : '' %>>Catter</option>
+            <option value="kasir" <%= petugas?.role === 'kasir' ? 'selected' : '' %>>Kasir</option>
+          </select>
+        </div>
+        <div class="col-md-6 form-group">
+          <label>Password <small class="text-muted"><%= petugas ? '(kosongkan jika tidak diubah)' : '' %></small></label>
+          <input type="password" name="password" class="form-control" <%= petugas ? '' : 'required' %>>
+        </div>
+      </div>
+      <div class="d-flex justify-content-between">
+        <a href="/admin/petugas" class="btn btn-light">Kembali</a>
+        <button type="submit" class="btn btn-primary">Simpan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<%- include('../partials/admin-footer') %>

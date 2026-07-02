@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= title %> - <%= appConfig?.nama_aplikasi || 'PAMSIMAS' %></title>
+  <link rel="stylesheet" href="/vendor/bootstrap/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css">
+  <link rel="stylesheet" href="/public/css/app.css">
+  <% if (appConfig?.logo_url) { %>
+    <link rel="icon" href="<%= appConfig.logo_url %>">
+  <% } %>
+</head>
+<body class="<%= typeof bodyClass !== 'undefined' ? bodyClass : 'bg-light' %>">
+  <div class="<%= typeof containerClass !== 'undefined' ? containerClass : 'container py-4 py-md-5' %>">
+    <% const shouldShowFlash = typeof showFlash === 'undefined' ? true : Boolean(showFlash); %>
+    <% if (flash && shouldShowFlash) { %>
+      <div class="alert alert-<%= flash.type %>"><%= flash.message %></div>
+    <% } %>
