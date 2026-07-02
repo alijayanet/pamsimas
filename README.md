@@ -214,8 +214,13 @@ cd /var/www/pamsimas
 ```bash
 rm -rf node_modules
 
-# Install tanpa menjalankan lifecycle scripts dependency (menghindari error "husky: not found")
-npm ci --no-fund --no-audit --ignore-scripts
+# Jika package-lock.json ada (hasil clone dari GitHub), gunakan npm ci (lebih stabil).
+# Jika tidak ada, fallback ke npm install untuk membuat package-lock.json.
+if [ -f package-lock.json ]; then
+  npm ci --no-fund --no-audit --ignore-scripts
+else
+  npm install --no-fund --no-audit --ignore-scripts
+fi
 
 # Pastikan modul native terbangun (better-sqlite3)
 npm rebuild better-sqlite3 --verbose
@@ -303,7 +308,11 @@ sudo certbot --nginx -d domain-anda.com -d www.domain-anda.com
 ```bash
 cd /var/www/pamsimas
 git pull origin main
-npm install --no-fund --no-audit --ignore-scripts
+if [ -f package-lock.json ]; then
+  npm ci --no-fund --no-audit --ignore-scripts
+else
+  npm install --no-fund --no-audit --ignore-scripts
+fi
 npm rebuild better-sqlite3 --verbose
 pm2 restart pamsimas
 ```
