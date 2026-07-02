@@ -215,7 +215,7 @@ cd /var/www/pamsimas
 rm -rf node_modules
 
 # Install tanpa menjalankan lifecycle scripts dependency (menghindari error "husky: not found")
-npm install --no-fund --no-audit --ignore-scripts
+npm ci --no-fund --no-audit --ignore-scripts
 
 # Pastikan modul native terbangun (better-sqlite3)
 npm rebuild better-sqlite3 --verbose
