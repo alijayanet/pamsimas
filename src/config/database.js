@@ -301,6 +301,30 @@ function initSchema() {
     // Niaga: progresif
     insertGolongan.run('niaga', 'Niaga / Usaha', 10000, 5, 1, 4500, 10, 6000, 20, 7500, 0);
   }
+
+  // Seed sample pelanggan dan akun pelanggan jika belum ada
+  const pelangganCount = db.prepare('SELECT COUNT(*) AS total FROM pelanggan').get();
+  if (!pelangganCount.total) {
+    const userModel = require('./env'); // Just import, actual model used below
+    
+    try {
+      // Create sample customer account
+      const pelangganUserId = db.prepare(`
+        INSERT INTO users (username, password, role)
+        VALUES (?, ?, ?)
+      `).run('pelanggan1', '$2a$10$w8YKH/sKGxcPxwMH5vBZ2OJL5lPk5jcG5mZ.hPxE5g4CzLz5Y4Y4.', 'pelanggan').lastInsertRowid;
+      
+      // Create sample customer data
+      db.prepare(`
+        INSERT INTO pelanggan (no_meteran, nama, alamat, no_whatsapp, tgl_bergabung, user_id, golongan_id)
+        VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?)
+      `).run('001001', 'Adi Wijaya', 'Jl. Merdeka No. 123, RT 01/RW 02', '+6281234567890', pelangganUserId, 'rumah_tangga');
+      
+      console.log('✅ Sample pelanggan created: username=pelanggan1, password=pelanggan123, no_meter=001001');
+    } catch (error) {
+      console.error('⚠️  Could not create sample pelanggan:', error.message);
+    }
+  }
 }
 
 initSchema();

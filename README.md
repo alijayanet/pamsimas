@@ -875,6 +875,33 @@ pamsimas/
 | **Pelanggan Dashboard** | `/pelanggan` | Pelanggan | Menu utama pelanggan |
 | **API QRIS Webhook** | `/api/qris/macrodroid` | Webhook | Terima notifikasi QRIS |
 
+Akses aplikasi di browser: **http://localhost:3005**
+
+---
+
+## 🔐 Login Credentials (Akun Default)
+
+Setiap fresh installation akan **otomatis membuat akun default** untuk memudahkan setup awal:
+
+### ✅ Admin Account
+- **Username:** `admin`
+- **Password:** `admin123`
+- **Role:** Admin (akses penuh ke sistem)
+- **Akses:** http://localhost:3005/login
+
+### ✅ Sample Pelanggan Account
+- **Username:** `pelanggan1`
+- **Password:** `pelanggan123`
+- **No. Meter:** `001001`
+- **Role:** Pelanggan (akses dashboard pelanggan)
+- **Akses:** http://localhost:3005/pelanggan/login
+
+⚠️ **SECURITY REMINDER:**
+- ✏️ Ubah password admin segera setelah login pertama kali
+- ✏️ Ubah password pelanggan setelah testing
+- 🔒 Jangan share akun default ke public/internet
+- 🗑️ Di production, hapus akun default setelah membuat akun baru
+
 ---
 
 ## 📋 Instalasi & Setup
@@ -911,25 +938,28 @@ npm rebuild better-sqlite3 --verbose
 
 #### 4. Setup Environment Variables
 
-Buat file `.env` di root proyek:
+Buat file `.env` di root proyek dari `.env.example.txt`:
 
 ```bash
-cp .env.example .env
+cp .env.example.txt .env
 ```
 
 Edit `.env` dan isi dengan config lokal Anda:
 
 ```env
-APP_PORT=3000
+APP_PORT=3005
 NODE_ENV=development
 SESSION_SECRET=isi_dengan_secret_panjang_dan_unik_12345678901234567890
 DB_PATH=./data/pamsimas.db
-BASE_URL=http://localhost:3000
+BASE_URL=http://localhost:3005
 UPLOAD_DIR=public/uploads/meter
 WA_SESSION_DIR=./data/wa-session
 ```
 
-**Important:** `SESSION_SECRET` harus random string panjang (min 20 karakter)
+**Notes:**
+- `.env.example.txt` adalah file teks yang bisa di-upload ke GitHub
+- `.env` adalah file lokal (di-.gitignore), jangan di-commit
+- `SESSION_SECRET` harus random string panjang (min 20 karakter)
 
 #### 5. Inisialisasi Database
 
@@ -954,19 +984,34 @@ npm run dev
 npm start
 ```
 
-Akses aplikasi: **http://localhost:3000**
+Akses aplikasi: **http://localhost:3005**
 
-#### 7. Setup Admin Pertama Kali
+#### 7. Login dengan Akun Default
 
-1. Buka http://localhost:3000 di browser
-2. Aplikasi akan redirect ke `/setup`
-3. Isi form setup:
-   - Username admin
-   - Password admin
-   - Konfirmasi password
-4. Submit → Admin account created
-5. Redirect ke login, login dengan akun admin yang baru dibuat
-6. Mulai setup tarif, pelanggan, dll
+Aplikasi akan **otomatis membuat akun default** saat pertama kali dijalankan.
+
+**Admin Account (untuk setup awal):**
+```
+Username: admin
+Password: admin123
+```
+
+**Sample Pelanggan Account:**
+```
+Username: pelanggan1
+Password: pelanggan123
+No. Meter: 001001
+```
+
+⚠️ **PENTING:** Setelah login pertama kali, **ubah password admin** di menu pengaturan untuk keamanan!
+
+#### 8. Setup & Konfigurasi (Optional)
+
+Setelah login admin di `/admin`:
+1. Setup tarif dan biaya di **Pengaturan > Parameter Tarif**
+2. Setup WhatsApp di **Pengaturan > WhatsApp**
+3. Setup QRIS di **Pengaturan > QRIS**
+4. Tambah petugas dan pelanggan sesuai kebutuhan
 
 ---
 
@@ -1031,7 +1076,7 @@ nano .env
 ```
 
 ```env
-APP_PORT=3000
+APP_PORT=3005
 NODE_ENV=production
 SESSION_SECRET=ganti_dengan_secret_yang_sangat_panjang_dan_random_minimal_30_karakter_harus_unik_dan_aman_123456789012345
 DB_PATH=./data/pamsimas.db
@@ -1046,6 +1091,13 @@ WA_SESSION_DIR=./data/wa-session
 
 ```bash
 npm run init-db
+```
+
+**Output:**
+```
+✅ Default admin created: username=admin, password=admin123
+⚠️  PLEASE CHANGE PASSWORD IMMEDIATELY AFTER LOGIN!
+✅ Sample pelanggan created: username=pelanggan1, password=pelanggan123, no_meter=001001
 ```
 
 #### Step 7: Start dengan PM2
@@ -1086,7 +1138,7 @@ server {
     client_max_body_size 10M;
 
     location / {
-        proxy_pass http://127.0.0.1:3000;
+        proxy_pass http://127.0.0.1:3005;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
@@ -1181,11 +1233,11 @@ pm2 logs pamsimas
 
 | Variable | Default | Deskripsi |
 |----------|---------|-----------|
-| `APP_PORT` | `3000` | Port yang digunakan aplikasi |
+| `APP_PORT` | `3005` | Port yang digunakan aplikasi |
 | `NODE_ENV` | `development` | Mode (`development` atau `production`) |
 | `SESSION_SECRET` | ⚠️ *required* | Secret key untuk session encryption (min 20 char) |
 | `DB_PATH` | `./data/pamsimas.db` | Path database SQLite |
-| `BASE_URL` | `http://localhost:3000` | Base URL publik (untuk link di notifikasi) |
+| `BASE_URL` | `http://localhost:3005` | Base URL publik (untuk link di notifikasi) |
 | `UPLOAD_DIR` | `public/uploads/meter` | Folder untuk upload foto meter |
 | `WA_SESSION_DIR` | `./data/wa-session` | Folder session Baileys WhatsApp |
 
@@ -1537,7 +1589,7 @@ RUN npm ci --no-fund --no-audit --ignore-scripts && \
 
 COPY . .
 
-EXPOSE 3000
+EXPOSE 3005
 
 ENV NODE_ENV=production
 CMD ["npm", "start"]
@@ -1552,12 +1604,12 @@ services:
   pamsimas:
     build: .
     ports:
-      - "3000:3000"
+      - "3005:3005"
     environment:
-      APP_PORT: 3000
+      APP_PORT: 3005
       NODE_ENV: production
       SESSION_SECRET: your-secret-here
-      BASE_URL: http://localhost:3000
+      BASE_URL: http://localhost:3005
     volumes:
       - ./data:/app/data
       - ./public/uploads:/app/public/uploads

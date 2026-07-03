@@ -32,6 +32,11 @@ function storeSetup(req, res) {
     return res.redirect('/setup');
   }
 
+  if (password.length < 6) {
+    req.flash('danger', 'Password minimal 6 karakter.');
+    return res.redirect('/setup');
+  }
+
   try {
     const userId = userModel.createUser({
       username,
@@ -45,16 +50,36 @@ function storeSetup(req, res) {
       role: 'admin'
     };
 
-    req.flash('success', 'Admin awal berhasil dibuat.');
+    req.flash('success', 'Admin awal berhasil dibuat. Selamat datang!');
     return res.redirect('/admin');
   } catch (error) {
-    req.flash('danger', error.message);
+    req.flash('danger', `Error: ${error.message}`);
     return res.redirect('/setup');
+  }
+}
+
+// Auto-create default admin jika belum ada
+function ensureDefaultAdmin() {
+  if (hasAdmin()) {
+    return;
+  }
+
+  try {
+    userModel.createUser({
+      username: 'admin',
+      password: 'admin123',
+      role: 'admin'
+    });
+    console.log('✅ Default admin created: username=admin, password=admin123');
+    console.log('⚠️  PLEASE CHANGE PASSWORD IMMEDIATELY AFTER LOGIN!');
+  } catch (error) {
+    console.error('❌ Failed to create default admin:', error.message);
   }
 }
 
 module.exports = {
   hasAdmin,
   showSetup,
-  storeSetup
+  storeSetup,
+  ensureDefaultAdmin
 };
