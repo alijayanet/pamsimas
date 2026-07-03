@@ -60,4 +60,8 @@ router.post('/whatsapp/send-reminder-single/:id', adminController.sendReminderSi
 router.get('/laporan/csv', adminController.exportLaporanCsv);
 router.get('/laporan/export-csv', adminController.exportLaporanCsv);
 
+// Change Password
+router.get('/change-password', adminController.showChangePassword);
+router.post('/change-password', adminController.updatePassword);
+
 module.exports = router;

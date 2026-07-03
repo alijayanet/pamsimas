@@ -63,6 +63,8 @@
             <li class="nav-item"><a href="/admin/tarif-golongan" class="nav-link <%= activeMenu === 'tarif-golongan' ? 'active' : '' %>"><i class="nav-icon fas fa-sliders-h"></i><p>Tarif Golongan</p></a></li>
             <li class="nav-item"><a href="/kasir" class="nav-link <%= activeMenu === 'kasir' ? 'active' : '' %>"><i class="nav-icon fas fa-cash-register"></i><p>Kasir / Loket</p></a></li>
             <li class="nav-item"><a href="/admin/whatsapp" class="nav-link <%= activeMenu === 'whatsapp' ? 'active' : '' %>"><i class="nav-icon fab fa-whatsapp"></i><p>WhatsApp</p></a></li>
+            <li class="nav-divider mt-3"></li>
+            <li class="nav-item"><a href="/admin/change-password" class="nav-link <%= activeMenu === 'change-password' ? 'active' : '' %>"><i class="nav-icon fas fa-key"></i><p>Ubah Password</p></a></li>
           <% } %>
           <% if (currentUser && (currentUser.role === 'catter' || currentUser.role === 'admin')) { %>
             <li class="nav-item"><a href="/catter" class="nav-link <%= activeMenu === 'catter' ? 'active' : '' %>"><i class="nav-icon fas fa-tachometer-alt"></i><p>Input Meteran</p></a></li>

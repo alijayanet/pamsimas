@@ -764,15 +764,66 @@ async function sendReminderSingle(req, res) {
       'Mohon segera lakukan pembayaran untuk menghindari denda keterlambatan.',
       'Terima kasih.'
     ].join('\n');
-
     const ok = await whatsappService.sendTextMessage(t.no_whatsapp, msg);
-    if (ok) {
-      return res.json({ success: true });
-    } else {
-      return res.status(500).json({ success: false, message: 'Gagal mengirim pesan via WhatsApp.' });
+    if (!ok) {
+      return res.status(400).json({ success: false, message: 'Gagal mengirim notifikasi WhatsApp.' });
     }
-  } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    return res.json({ success: true, message: 'Reminder terkirim.' });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+}
+
+// ===== CHANGE PASSWORD =====
+function showChangePassword(req, res) {
+  return res.render('admin/change-password', {
+    title: 'Ubah Password Admin'
+  });
+}
+
+function updatePassword(req, res) {
+  const bcrypt = require('bcryptjs');
+  const { current_password, new_password, confirm_password } = req.body;
+
+  // Validate input
+  if (!current_password || !new_password || !confirm_password) {
+    req.flash('danger', 'Semua field wajib diisi.');
+    return res.redirect('/admin/change-password');
+  }
+
+  if (new_password.length < 6) {
+    req.flash('danger', 'Password baru minimal 6 karakter.');
+    return res.redirect('/admin/change-password');
+  }
+
+  if (new_password !== confirm_password) {
+    req.flash('danger', 'Konfirmasi password tidak sama dengan password baru.');
+    return res.redirect('/admin/change-password');
+  }
+
+  // Get current user
+  const currentUser = userModel.findByIdFull(req.session.user.id);
+  if (!currentUser) {
+    req.flash('danger', 'Sesi user tidak valid.');
+    return res.redirect('/admin/change-password');
+  }
+
+  // Verify current password
+  if (!bcrypt.compareSync(current_password, currentUser.password)) {
+    req.flash('danger', 'Password saat ini tidak sesuai.');
+    return res.redirect('/admin/change-password');
+  }
+
+  // Update password
+  try {
+    userModel.updatePassword(currentUser.id, new_password);
+    req.flash('success', 'Password admin berhasil diubah. Silakan login kembali dengan password baru.');
+    req.session.destroy(() => {
+      res.redirect('/login');
+    });
+  } catch (error) {
+    req.flash('danger', `Error: ${error.message}`);
+    res.redirect('/admin/change-password');
   }
 }
 
@@ -870,5 +921,7 @@ module.exports = {
   updateTarifGolongan,
   broadcastReminderTunggakan,
   exportLaporanCsv,
-  sendReminderSingle
+  sendReminderSingle,
+  showChangePassword,
+  updatePassword
 };
