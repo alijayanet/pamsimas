@@ -8,6 +8,7 @@ const tagihanModel = require('../models/tagihanModel');
 const keuanganModel = require('../models/keuanganModel');
 const pembayaranLogModel = require('../models/pembayaranLogModel');
 const qrisNotifLogModel = require('../models/qrisNotifLogModel');
+const tarifGolonganModel = require('../models/tarifGolonganModel');
 const dashboardService = require('../services/dashboardService');
 const whatsappService = require('../services/whatsappService');
 const qrisService = require('../services/qrisService');
@@ -242,7 +243,8 @@ function showCreatePelanggan(req, res) {
   return res.render('admin/pelanggan-form', {
     title: 'Tambah Pelanggan',
     formAction: '/admin/pelanggan',
-    pelanggan: null
+    pelanggan: null,
+    golonganList: tarifGolonganModel.listAll()
   });
 }
 
@@ -256,13 +258,14 @@ function showEditPelanggan(req, res) {
   return res.render('admin/pelanggan-form', {
     title: 'Edit Pelanggan',
     formAction: `/admin/pelanggan/${pelanggan.id}`,
-    pelanggan
+    pelanggan,
+    golonganList: tarifGolonganModel.listAll()
   });
 }
 
 function storePelanggan(req, res) {
   try {
-    const { no_meteran, nama, alamat, no_whatsapp, tgl_bergabung, username, password } = req.body;
+    const { no_meteran, nama, alamat, no_whatsapp, tgl_bergabung, username, password, golongan_id } = req.body;
     let userId = null;
 
     if (username && !password) {
@@ -280,7 +283,8 @@ function storePelanggan(req, res) {
       alamat,
       no_whatsapp,
       tgl_bergabung,
-      user_id: userId
+      user_id: userId,
+      golongan_id
     });
 
     req.flash('success', 'Pelanggan berhasil ditambahkan.');
@@ -299,7 +303,7 @@ function updatePelanggan(req, res) {
   }
 
   try {
-    const { no_meteran, nama, alamat, no_whatsapp, tgl_bergabung, username, password } = req.body;
+    const { no_meteran, nama, alamat, no_whatsapp, tgl_bergabung, username, password, golongan_id } = req.body;
     let userId = current.user_id;
 
     if (username) {
@@ -321,7 +325,8 @@ function updatePelanggan(req, res) {
       alamat,
       no_whatsapp,
       tgl_bergabung,
-      user_id: userId
+      user_id: userId,
+      golongan_id
     });
 
     req.flash('success', 'Data pelanggan berhasil diperbarui.');
@@ -684,6 +689,150 @@ async function testQrisWhatsapp(req, res) {
   return res.redirect('/admin/whatsapp');
 }
 
+// ===== GOLONGAN TARIF =====
+function showTarifGolongan(req, res) {
+  return res.render('admin/tarif-golongan', {
+    title: 'Pengaturan Tarif Golongan',
+    activeMenu: 'tarif-golongan',
+    golongan: tarifGolonganModel.listAll()
+  });
+}
+
+function updateTarifGolongan(req, res) {
+  const kode = req.params.kode;
+  const allowed = ['rumah_tangga', 'sosial', 'niaga'];
+  if (!allowed.includes(kode)) {
+    req.flash('danger', 'Golongan tidak valid.');
+    return res.redirect('/admin/tarif-golongan');
+  }
+  try {
+    tarifGolonganModel.update(kode, req.body);
+    req.flash('success', `Tarif golongan "${kode}" berhasil diperbarui.`);
+  } catch (err) {
+    req.flash('danger', err.message);
+  }
+  return res.redirect('/admin/tarif-golongan');
+}
+
+// ===== BROADCAST REMINDER TUNGGAKAN =====
+async function broadcastReminderTunggakan(req, res) {
+  const bulan = Number(req.body.bulan || (dayjs().month() + 1));
+  const tahun = Number(req.body.tahun || dayjs().year());
+  const tunggakan = tagihanModel.listByPeriod({ bulan, tahun, status: 'belum_bayar', limit: 500 });
+  const appConfig = aplikasiModel.getSettings();
+  const senderName = appConfig?.nama_instansi || appConfig?.nama_aplikasi || 'PAMSIMAS';
+
+  let sent = 0;
+  let skipped = 0;
+  for (const t of tunggakan) {
+    if (!t.no_whatsapp) { skipped++; continue; }
+    const msg = [
+      senderName,
+      '',
+      `Yth. ${t.nama},`,
+      `Tagihan air periode ${t.bulan}/${t.tahun} sebesar Rp${Number(t.total_tagihan).toLocaleString('id-ID')} belum dibayar.`,
+      'Mohon segera lakukan pembayaran untuk menghindari denda keterlambatan.',
+      'Terima kasih.'
+    ].join('\n');
+    try {
+      const ok = await whatsappService.sendTextMessage(t.no_whatsapp, msg);
+      if (ok) sent++; else skipped++;
+    } catch (_) { skipped++; }
+    // Delay aman 3 detik antar pesan
+    await new Promise((r) => setTimeout(r, 3000));
+  }
+  req.flash('success', `Broadcast selesai. Terkirim: ${sent}, dilewati: ${skipped}.`);
+  return res.redirect('/admin/tagihan');
+}
+
+async function sendReminderSingle(req, res) {
+  try {
+    const t = tagihanModel.getByIdDetail(req.params.id);
+    if (!t) {
+      return res.status(404).json({ success: false, message: 'Tagihan tidak ditemukan.' });
+    }
+    if (!t.no_whatsapp) {
+      return res.status(400).json({ success: false, message: 'Nomor WhatsApp tidak terisi.' });
+    }
+    const appConfig = aplikasiModel.getSettings();
+    const senderName = appConfig?.nama_instansi || appConfig?.nama_aplikasi || 'PAMSIMAS';
+    const msg = [
+      senderName,
+      '',
+      `Yth. ${t.nama},`,
+      `Tagihan air periode ${t.bulan}/${t.tahun} sebesar Rp${Number(t.total_tagihan).toLocaleString('id-ID')} belum dibayar.`,
+      'Mohon segera lakukan pembayaran untuk menghindari denda keterlambatan.',
+      'Terima kasih.'
+    ].join('\n');
+
+    const ok = await whatsappService.sendTextMessage(t.no_whatsapp, msg);
+    if (ok) {
+      return res.json({ success: true });
+    } else {
+      return res.status(500).json({ success: false, message: 'Gagal mengirim pesan via WhatsApp.' });
+    }
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+}
+
+// ===== EKSPOR LAPORAN CSV =====
+function exportLaporanCsv(req, res) {
+  const jenis = String(req.query.jenis || 'bku');
+  const bulan = Number(req.query.bulan || (dayjs().month() + 1));
+  const tahun = Number(req.query.tahun || dayjs().year());
+  const dari = String(req.query.dari || '');
+  const sampai = String(req.query.sampai || '');
+
+  const escCsv = (v) => {
+    const s = String(v === null || v === undefined ? '' : v);
+    return s.includes(',') || s.includes('"') || s.includes('\n')
+      ? `"${s.replace(/"/g, '""')}"`
+      : s;
+  };
+  const row = (cols) => cols.map(escCsv).join(',');
+
+  let filename, rows;
+
+  if (jenis === 'tunggakan') {
+    const data = tagihanModel.listByPeriod({ bulan, tahun, status: 'belum_bayar', limit: 1000 });
+    filename = `tunggakan_${bulan}_${tahun}.csv`;
+    rows = [
+      row(['No', 'Nama', 'No Meteran', 'Periode', 'Total Tagihan', 'Denda']),
+      ...data.map((d, i) => row([
+        i + 1, d.nama, d.no_meteran, `${d.bulan}/${d.tahun}`,
+        d.total_tagihan, d.denda || 0
+      ]))
+    ];
+  } else if (jenis === 'rekap_pemakaian') {
+    const data = tagihanModel.listByPeriod({ bulan, tahun, status: 'all', limit: 1000 });
+    filename = `rekap_pemakaian_${bulan}_${tahun}.csv`;
+    rows = [
+      row(['No', 'Nama', 'No Meteran', 'Periode', 'Total Kubik', 'Kubik Ditagih', 'Total Tagihan', 'Status']),
+      ...data.map((d, i) => row([
+        i + 1, d.nama, d.no_meteran, `${d.bulan}/${d.tahun}`,
+        d.total_kubik, d.kubik_ditagihkan, d.total_tagihan, d.status_bayar
+      ]))
+    ];
+  } else {
+    // BKU - Buku Kas Umum
+    const filter = { dari, sampai };
+    const data = keuanganModel.listAll ? keuanganModel.listAll(filter) : keuanganModel.getLatest(1000);
+    filename = `bku_${dari || tahun}.csv`;
+    rows = [
+      row(['No', 'Tanggal', 'Tipe', 'Keterangan', 'Jumlah']),
+      ...data.map((d, i) => row([
+        i + 1, d.tanggal, d.tipe, d.keterangan, d.jumlah
+      ]))
+    ];
+  }
+
+  const csv = rows.join('\n');
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  return res.send('\uFEFF' + csv); // BOM untuk Excel
+}
+
 module.exports = {
   dashboard,
   listTagihan,
@@ -715,5 +864,11 @@ module.exports = {
   broadcastWhatsapp,
   sendQrisToCustomer,
   sendQrisReminderBulk,
-  testQrisWhatsapp
+  testQrisWhatsapp,
+  // Fitur Baru
+  showTarifGolongan,
+  updateTarifGolongan,
+  broadcastReminderTunggakan,
+  exportLaporanCsv,
+  sendReminderSingle
 };

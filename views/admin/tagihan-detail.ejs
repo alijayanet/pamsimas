@@ -1,125 +1,485 @@
 <%- include('../partials/admin-header', { title, activeMenu: 'tagihan' }) %>
 
+<style>
+/* ============================================================
+   INVOICE DETAIL — TAMPILAN LAYAR
+   ============================================================ */
+.inv-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0,0,0,.10);
+  overflow: hidden;
+  border: 1px solid #e0e4ea;
+}
+.inv-header {
+  background: linear-gradient(135deg, #0047ab 0%, #1565c0 60%, #0288d1 100%);
+  color: #fff;
+  padding: 18px 24px 16px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.inv-header-left { display: flex; align-items: center; gap: 14px; }
+.inv-logo {
+  width: 52px; height: 52px; object-fit: contain;
+  background: #fff; border-radius: 8px; padding: 4px; flex-shrink: 0;
+}
+.inv-logo-fallback {
+  width: 52px; height: 52px; background: rgba(255,255,255,.18);
+  border-radius: 8px; display: flex; align-items: center;
+  justify-content: center; font-size: 1.6rem; flex-shrink: 0;
+}
+.inv-org-name  { font-size: 1rem; font-weight: 700; line-height: 1.2; }
+.inv-org-sub   { font-size: 0.78rem; opacity: .85; margin-top: 2px; line-height: 1.3; }
+.inv-header-right { text-align: right; flex-shrink: 0; }
+.inv-title     { font-size: 0.68rem; opacity: .75; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 2px; }
+.inv-number    { font-size: 1.05rem; font-weight: 700; letter-spacing: .02em; }
+
+.inv-status-badge {
+  display: inline-block; font-size: 0.65rem; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase;
+  padding: 2px 10px; border-radius: 30px; margin-top: 5px;
+}
+.inv-status-badge.lunas    { background: #22c55e; color: #fff; }
+.inv-status-badge.pending  { background: #f59e0b; color: #fff; }
+
+.inv-body { padding: 0 24px 20px; }
+
+.inv-customer-row {
+  display: flex; justify-content: space-between; gap: 16px;
+  padding: 14px 0 12px; border-bottom: 1px solid #e8eaf0; flex-wrap: wrap;
+}
+.inv-customer-col { flex: 1; min-width: 120px; }
+.inv-label {
+  font-size: 0.68rem; color: #8a94a6; text-transform: uppercase;
+  letter-spacing: .07em; margin-bottom: 2px; font-weight: 600;
+}
+.inv-value { font-size: 0.88rem; color: #1a1f2e; font-weight: 600; line-height: 1.3; }
+.inv-value.mono { font-family: 'Courier New', monospace; letter-spacing: .04em; }
+
+.inv-section-title {
+  font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .09em; color: #6b7280; margin: 14px 0 8px;
+  padding-bottom: 4px; border-bottom: 1px solid #f0f2f5;
+}
+
+.inv-meter-bar {
+  display: flex; align-items: stretch; gap: 0; margin: 8px 0 10px;
+  background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;
+}
+.inv-meter-cell { flex: 1; padding: 8px 12px; text-align: center; }
+.inv-meter-cell + .inv-meter-cell { border-left: 1px solid #e2e8f0; }
+.inv-meter-cell-label { font-size: 0.65rem; color: #8a94a6; text-transform: uppercase; letter-spacing: .07em; font-weight: 600; }
+.inv-meter-cell-val { font-size: 1rem; font-weight: 700; font-family: 'Courier New', monospace; color: #1a1f2e; margin-top: 2px; }
+.inv-meter-arrow { padding: 0 6px; color: #9ca3af; font-size: 0.85rem; display: flex; align-items: center; }
+
+.inv-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+.inv-table td { padding: 5px 0; vertical-align: top; color: #374151; }
+.inv-table td:last-child { text-align: right; font-weight: 500; white-space: nowrap; }
+.inv-table .sep-row td { border-top: 1px dashed #d1d5db; padding-top: 8px; }
+.inv-table .total-row td { font-weight: 700; font-size: 0.95rem; color: #0d6efd; padding-top: 6px; }
+
+.inv-total-box {
+  background: #eff6ff; border: 1.5px solid #bfdbfe; border-radius: 10px;
+  padding: 12px 16px; margin-top: 14px;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+}
+.inv-total-box-label { font-size: 0.78rem; color: #3b82f6; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+.inv-total-box-amount { font-size: 1.35rem; font-weight: 800; color: #1d4ed8; }
+
+.inv-meta-row {
+  display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  margin-top: 14px; padding-top: 12px; border-top: 1px solid #e8eaf0;
+}
+.inv-meta-col { flex: 1; min-width: 100px; }
+
+.inv-footer-msg {
+  text-align: center; padding: 10px 16px 0;
+  color: #9ca3af; font-size: 0.75rem; line-height: 1.5;
+  border-top: 1px dashed #d1d5db; margin-top: 14px;
+}
+.inv-method-badge {
+  display: inline-block; padding: 2px 8px; border-radius: 30px;
+  font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+}
+.inv-method-badge.tunai    { background: #dcfce7; color: #15803d; }
+.inv-method-badge.transfer { background: #dbeafe; color: #1d4ed8; }
+.inv-method-badge.qris     { background: #ede9fe; color: #7c3aed; }
+
+/* ============================================================
+   PRINT STYLES
+   ============================================================ */
+@media print {
+  /* Sembunyikan semua elemen admin & non-invoice */
+  .no-print,
+  .main-sidebar, .main-header, .content-header,
+  nav, aside, .navbar, .sidebar, footer, .footer,
+  .btn, .alert, .card-header .d-flex,
+  .col-lg-4 { /* panel aksi di sidebar kanan */
+    display: none !important;
+  }
+
+  body, .wrapper, .content-wrapper {
+    background: #fff !important;
+    margin: 0 !important; padding: 0 !important;
+    width: 100% !important; min-height: auto !important;
+  }
+  .content, .container, .container-fluid { margin: 0 !important; padding: 0 !important; }
+  [class*='col-'] { width: 100% !important; max-width: 100% !important; flex: 0 0 100% !important; padding: 0 !important; }
+  .row { display: block !important; margin: 0 !important; }
+
+  .inv-card { border: none !important; box-shadow: none !important; border-radius: 0 !important; }
+  .inv-header {
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    padding: 10px 14px !important;
+  }
+  .inv-body { padding: 0 14px 12px !important; }
+  .inv-logo { width: 38px !important; height: 38px !important; }
+  .inv-org-name { font-size: 0.88rem !important; }
+  .inv-table { font-size: 0.82rem !important; }
+  .inv-table td { padding: 3px 0 !important; }
+  .inv-total-box { -webkit-print-color-adjust: exact; print-color-adjust: exact; padding: 8px 12px !important; }
+  .inv-total-box-amount { font-size: 1.1rem !important; }
+  .inv-card { page-break-inside: avoid; }
+  a { color: #000 !important; text-decoration: none !important; }
+
+  /* Foto meter TIDAK dicetak */
+  .foto-meter-wrap,
+  .foto-bukti-img,
+  img.foto-bukti-img,
+  img.meter-photo-thumb,
+  .meter-photo-link,
+  .meter-photo-caption {
+    display: none !important;
+  }
+}
+</style>
+
+<%
+  var bulanNames = ['','Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'];
+  var bln = parseInt(breakdown.periode, 10);
+  var blnLabel = (bln >= 1 && bln <= 12) ? bulanNames[bln] : '';
+  var metodeBayar = (tagihan.metode_bayar || '').toLowerCase();
+%>
+
 <div class="row">
+  <%# ===== KOLOM KIRI: INVOICE ===== %>
   <div class="col-lg-8">
-    <div class="card">
-      <div class="card-header d-flex justify-content-between align-items-center flex-wrap" style="gap:10px;">
-        <h3 class="card-title mb-0">Invoice Tagihan</h3>
-        <div class="d-flex flex-wrap" style="gap:6px;">
-          <a href="/admin/tagihan" class="btn btn-sm btn-outline-secondary">Kembali</a>
-          <button type="button" class="btn btn-sm btn-outline-primary" onclick="window.print()">Cetak</button>
-          <a href="/pelanggan/cek?keyword=<%= encodeURIComponent(tagihan.no_meteran) %>" target="_blank" class="btn btn-sm btn-outline-secondary">Invoice Publik</a>
+
+    <%# Toolbar aksi (layar saja) %>
+    <div class="d-flex align-items-center justify-content-between mb-3 no-print" style="gap:8px; flex-wrap:wrap;">
+      <a href="/admin/tagihan" class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-arrow-left mr-1"></i> Kembali
+      </a>
+      <div class="d-flex" style="gap:6px; flex-wrap:wrap;">
+        <a href="/pelanggan/cek?keyword=<%= encodeURIComponent(tagihan.no_meteran) %>" target="_blank" class="btn btn-sm btn-outline-secondary">
+          <i class="fas fa-external-link-alt mr-1"></i> Invoice Publik
+        </a>
+        <div class="dropdown">
+          <button class="btn btn-sm btn-outline-info dropdown-toggle" type="button" data-toggle="dropdown">
+            <i class="fas fa-print mr-1"></i> Cetak
+          </button>
+          <div class="dropdown-menu dropdown-menu-right">
+            <button class="dropdown-item" onclick="setPrinterSize('normal'); window.print();">Normal / A4</button>
+            <button class="dropdown-item" onclick="setPrinterSize('thermal-80'); window.print();">Thermal 80mm</button>
+            <button class="dropdown-item" onclick="setPrinterSize('thermal-58'); window.print();">Thermal 58mm</button>
+          </div>
         </div>
       </div>
+    </div>
+
+    <%# ===== INVOICE CARD ===== %>
+    <div class="inv-card">
+
+      <%# ── HEADER BERWARNA ── %>
+      <div class="inv-header">
+        <div class="inv-header-left">
+          <% if (appConfig?.logo_url) { %>
+            <img src="<%= appConfig.logo_url %>" alt="Logo" class="inv-logo">
+          <% } else { %>
+            <div class="inv-logo-fallback"><i class="fas fa-tint"></i></div>
+          <% } %>
+          <div>
+            <div class="inv-org-name"><%= appConfig?.nama_aplikasi || 'PAMSIMAS' %></div>
+            <div class="inv-org-sub"><%= appConfig?.nama_instansi || 'Unit Pengelola PAMSIMAS' %></div>
+            <% if (appConfig?.alamat_loket) { %>
+              <div class="inv-org-sub"><%= appConfig.alamat_loket %></div>
+            <% } %>
+          </div>
+        </div>
+        <div class="inv-header-right">
+          <div class="inv-title">Tagihan Air</div>
+          <div class="inv-number">INV-<%= String(tagihan.id).padStart(6, '0') %></div>
+          <div class="inv-status-badge <%= tagihan.status_bayar === 'lunas' ? 'lunas' : 'pending' %>">
+            <%= tagihan.status_bayar === 'lunas' ? '✓ LUNAS' : '● BELUM BAYAR' %>
+          </div>
+        </div>
+      </div>
+
+      <div class="inv-body">
+
+        <%# ── INFO PELANGGAN ── %>
+        <div class="inv-customer-row">
+          <div class="inv-customer-col">
+            <div class="inv-label">Pelanggan</div>
+            <div class="inv-value"><%= tagihan.nama %></div>
+          </div>
+          <div class="inv-customer-col">
+            <div class="inv-label">No. Meter</div>
+            <div class="inv-value mono"><%= tagihan.no_meteran %></div>
+          </div>
+          <div class="inv-customer-col" style="flex:2;">
+            <div class="inv-label">Alamat</div>
+            <div class="inv-value"><%= tagihan.alamat || '-' %></div>
+          </div>
+          <div class="inv-customer-col">
+            <div class="inv-label">Periode Tagihan</div>
+            <div class="inv-value"><%= breakdown.periode %></div>
+          </div>
+          <div class="inv-customer-col">
+            <div class="inv-label">Periode Baca</div>
+            <div class="inv-value"><%= breakdown.periodeBaca %></div>
+          </div>
+        </div>
+
+        <%# ── BAR STAND METER ── %>
+        <div class="inv-section-title">Rincian Pemakaian Air</div>
+        <div class="inv-meter-bar">
+          <div class="inv-meter-cell">
+            <div class="inv-meter-cell-label">Stand Awal</div>
+            <div class="inv-meter-cell-val"><%= breakdown.meterAwal ?? '-' %></div>
+          </div>
+          <div class="inv-meter-arrow"><i class="fas fa-arrow-right"></i></div>
+          <div class="inv-meter-cell">
+            <div class="inv-meter-cell-label">Stand Akhir</div>
+            <div class="inv-meter-cell-val"><%= breakdown.meterAkhir ?? '-' %></div>
+          </div>
+          <div class="inv-meter-arrow"><i class="fas fa-equals"></i></div>
+          <div class="inv-meter-cell">
+            <div class="inv-meter-cell-label">Pemakaian</div>
+            <div class="inv-meter-cell-val"><%= breakdown.totalKubik %> m³</div>
+          </div>
+          <div class="inv-meter-cell">
+            <div class="inv-meter-cell-label">Ditagihkan</div>
+            <div class="inv-meter-cell-val"><%= breakdown.kubikDitagihkan %> m³</div>
+          </div>
+        </div>
+
+        <%# Foto meter — hanya di layar, tersembunyi saat print %>
+        <% if (tagihan.foto_bukti) { %>
+          <div class="foto-meter-wrap no-print mb-3">
+            <div class="inv-label mb-1">Foto Meter</div>
+            <a href="<%= tagihan.foto_bukti %>" target="_blank" class="meter-photo-link">
+              <img src="<%= tagihan.foto_bukti %>" alt="Foto bukti meter"
+                   class="img-fluid rounded border foto-bukti-img" style="max-height:200px; object-fit:cover;">
+            </a>
+          </div>
+        <% } %>
+
+        <%# ── RINCIAN BIAYA ── %>
+        <div class="inv-section-title">Rincian Biaya</div>
+        <table class="inv-table">
+          <% if (breakdown.minimumPemakaianKubik > 0) { %>
+          <tr>
+            <td>Minimum abonemen</td>
+            <td><%= breakdown.minimumPemakaianKubik %> m³</td>
+          </tr>
+          <% } %>
+          <tr>
+            <td>Pemakaian ditagihkan</td>
+            <td><%= breakdown.kubikDitagihkan %> m³</td>
+          </tr>
+          <% if (breakdown.hargaPerKubik > 0) { %>
+          <tr>
+            <td>Tarif per m³</td>
+            <td><%= helpers.formatCurrency(breakdown.hargaPerKubik) %></td>
+          </tr>
+          <tr>
+            <td>Biaya pemakaian air</td>
+            <td><%= helpers.formatCurrency(breakdown.biayaAir) %></td>
+          </tr>
+          <% } %>
+          <% if (breakdown.biayaAdmin > 0) { %>
+          <tr>
+            <td>Biaya administrasi</td>
+            <td><%= helpers.formatCurrency(breakdown.biayaAdmin) %></td>
+          </tr>
+          <% } %>
+          <% if (breakdown.denda > 0) { %>
+          <tr>
+            <td style="color:#ef4444;">Denda keterlambatan</td>
+            <td style="color:#ef4444;"><%= helpers.formatCurrency(breakdown.denda) %></td>
+          </tr>
+          <% } %>
+          <% if (tagihan.status_bayar !== 'lunas' && tagihan.qris_amount_unique) { %>
+          <tr>
+            <td class="text-muted" style="font-size:0.82rem;">Kode unik QRIS</td>
+            <td class="text-muted" style="font-size:0.82rem;"><%= helpers.formatCurrency(tagihan.qris_amount_unique) %> (kode <%= String(tagihan.qris_unique_code || 0).padStart(3, '0') %>)</td>
+          </tr>
+          <% } %>
+          <tr class="sep-row"><td></td><td></td></tr>
+          <tr class="total-row">
+            <td>Total Tagihan</td>
+            <td><%= helpers.formatCurrency(breakdown.totalTagihan) %></td>
+          </tr>
+        </table>
+
+        <%# ── KOTAK TOTAL BESAR ── %>
+        <div class="inv-total-box">
+          <div>
+            <div class="inv-total-box-label">Total Tagihan</div>
+            <% if (tagihan.status_bayar === 'lunas') { %>
+              <div style="font-size:0.75rem; color:#16a34a; margin-top:2px;">
+                ✓ Dibayar <%= tagihan.tgl_bayar ? helpers.formatDate(tagihan.tgl_bayar) : '' %> via
+                <span class="inv-method-badge <%= metodeBayar %>"><%= tagihan.metode_bayar || '-' %></span>
+              </div>
+            <% } %>
+          </div>
+          <div class="inv-total-box-amount"><%= helpers.formatCurrency(breakdown.totalTagihan) %></div>
+        </div>
+
+        <%# ── META: DIBUAT & STATUS BAYAR ── %>
+        <div class="inv-meta-row">
+          <div class="inv-meta-col">
+            <div class="inv-label">Tanggal Dibuat</div>
+            <div class="inv-value" style="font-size:0.82rem;font-weight:500;"><%= tagihan.generated_at ? helpers.formatDate(tagihan.generated_at) : '-' %></div>
+          </div>
+          <div class="inv-meta-col">
+            <div class="inv-label">Mode Generate</div>
+            <div class="inv-value" style="font-size:0.82rem;">
+              <span class="badge badge-<%= tagihan.generated_mode === 'auto' ? 'primary' : 'secondary' %>"><%= tagihan.generated_mode || 'manual' %></span>
+            </div>
+          </div>
+          <% if (tagihan.status_bayar === 'lunas') { %>
+          <div class="inv-meta-col">
+            <div class="inv-label">Waktu Bayar</div>
+            <div class="inv-value" style="font-size:0.82rem;font-weight:500;"><%= tagihan.tgl_bayar ? helpers.formatDate(tagihan.tgl_bayar) : '-' %></div>
+          </div>
+          <div class="inv-meta-col">
+            <div class="inv-label">Metode</div>
+            <div><span class="inv-method-badge <%= metodeBayar %>"><%= tagihan.metode_bayar || '-' %></span></div>
+          </div>
+          <% } %>
+          <% if (tagihan.no_whatsapp) { %>
+          <div class="inv-meta-col">
+            <div class="inv-label">WhatsApp</div>
+            <div class="inv-value" style="font-size:0.82rem;font-weight:500;"><%= tagihan.no_whatsapp %></div>
+          </div>
+          <% } %>
+        </div>
+
+        <%# ── FOOTER PESAN ── %>
+        <div class="inv-footer-msg">
+          <% if (appConfig?.footer_kwitansi) { %>
+            <div><%= appConfig.footer_kwitansi %></div>
+          <% } %>
+          <div style="margin-top:3px;">Dokumen ini merupakan bukti tagihan resmi &bull; <%= appConfig?.nama_aplikasi || 'PAMSIMAS' %></div>
+        </div>
+
+      </div><%# end inv-body %>
+    </div><%# end inv-card %>
+  </div>
+
+  <%# ===== KOLOM KANAN: AKSI (hanya layar) ===== %>
+  <div class="col-lg-4 no-print">
+    <div class="card card-info card-outline">
+      <div class="card-header"><h3 class="card-title"><i class="fas fa-bolt mr-1"></i> Aksi Cepat</h3></div>
       <div class="card-body">
-        <div class="row">
-          <div class="col-md-6 mb-3">
-            <div class="border rounded p-3 h-100">
-              <div class="text-muted small mb-1">Pelanggan</div>
-              <div class="h5 mb-1"><%= tagihan.nama %></div>
-              <div class="text-muted">No. Meter <strong><%= tagihan.no_meteran %></strong></div>
-              <div class="text-muted">WA <strong><%= tagihan.no_whatsapp || '-' %></strong></div>
-              <div class="text-muted"><%= tagihan.alamat || '-' %></div>
-            </div>
-          </div>
-          <div class="col-md-6 mb-3">
-            <div class="border rounded p-3 h-100">
-              <div class="text-muted small mb-1">Periode</div>
-              <div class="h5 mb-1"><%= breakdown.periode %></div>
-              <div class="text-muted">Periode baca <strong><%= breakdown.periodeBaca %></strong></div>
-              <div class="mt-2">
-                <span class="badge badge-<%= tagihan.status_bayar === 'lunas' ? 'success' : 'warning' %>"><%= tagihan.status_bayar %></span>
-                <span class="badge badge-<%= tagihan.generated_mode === 'auto' ? 'primary' : 'secondary' %>"><%= tagihan.generated_mode || 'manual' %></span>
-              </div>
-              <div class="mt-2 text-muted small">
-                <div><strong>Dibuat:</strong> <%= tagihan.generated_at ? helpers.formatDate(tagihan.generated_at) : '-' %></div>
-                <div><strong>Bayar:</strong> <%= tagihan.tgl_bayar ? helpers.formatDate(tagihan.tgl_bayar) : '-' %> / <%= tagihan.metode_bayar || '-' %></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="row">
-          <div class="col-md-6 mb-3">
-            <div class="border rounded p-3 h-100">
-              <div class="d-flex justify-content-between align-items-center">
-                <div class="font-weight-bold">Detail Pemakaian</div>
-                <% if (tagihan.foto_bukti) { %>
-                  <a href="<%= tagihan.foto_bukti %>" target="_blank" class="btn btn-sm btn-outline-secondary">Foto Meter</a>
-                <% } %>
-              </div>
-              <table class="table table-sm table-borderless mb-0 mt-2">
-                <tr><td>Meter Awal</td><td class="text-right"><%= breakdown.meterAwal %></td></tr>
-                <tr><td>Meter Akhir</td><td class="text-right"><%= breakdown.meterAkhir %></td></tr>
-                <tr><td>Pemakaian</td><td class="text-right"><%= breakdown.totalKubik %> m3</td></tr>
-                <tr><td>Kubik Ditagih</td><td class="text-right"><%= breakdown.kubikDitagihkan %> m3</td></tr>
-              </table>
-              <% if (tagihan.foto_bukti) { %>
-                <div class="mt-2">
-                  <img src="<%= tagihan.foto_bukti %>" alt="Foto bukti meter" class="img-fluid rounded border" style="max-height: 260px;">
-                </div>
-              <% } %>
-            </div>
-          </div>
-          <div class="col-md-6 mb-3">
-            <div class="border rounded p-3 h-100">
-              <div class="font-weight-bold">Rincian Biaya (Snapshot)</div>
-              <table class="table table-sm table-borderless mb-0 mt-2">
-                <tr><td>Harga per m3</td><td class="text-right"><%= helpers.formatCurrency(breakdown.hargaPerKubik) %></td></tr>
-                <tr><td>Minimum Abonement</td><td class="text-right"><%= breakdown.minimumPemakaianKubik %> m3</td></tr>
-                <tr><td>Biaya Air</td><td class="text-right"><%= helpers.formatCurrency(breakdown.biayaAir) %></td></tr>
-                <tr><td>Biaya Admin</td><td class="text-right"><%= helpers.formatCurrency(breakdown.biayaAdmin) %></td></tr>
-                <tr><td>Denda</td><td class="text-right"><%= helpers.formatCurrency(breakdown.denda) %></td></tr>
-                <tr class="border-top"><td><strong>Total</strong></td><td class="text-right"><strong><%= helpers.formatCurrency(breakdown.totalTagihan) %></strong></td></tr>
-              </table>
-              <% if (tagihan.status_bayar !== 'lunas' && tagihan.qris_amount_unique) { %>
-                <div class="alert alert-light border mt-3 mb-0">
-                  <div class="small text-muted">Kode QRIS unik</div>
-                  <div><strong><%= helpers.formatCurrency(tagihan.qris_amount_unique) %></strong> (kode <%= String(tagihan.qris_unique_code || 0).padStart(3, '0') %>)</div>
-                </div>
-              <% } %>
-            </div>
-          </div>
-        </div>
-
         <% if (tagihan.status_bayar !== 'lunas') { %>
-          <div class="alert alert-warning mb-0">
-            Status masih belum bayar. Anda bisa lunaskan dari halaman ini atau siapkan QRIS dan kirim WA.
+          <div class="alert alert-warning py-2 px-3 mb-3" style="font-size:0.85rem;">
+            <i class="fas fa-exclamation-triangle mr-1"></i> Tagihan belum lunas.
           </div>
+
+          <form action="/admin/tagihan/<%= tagihan.id %>/lunas" method="post" class="mb-2">
+            <input type="hidden" name="metode_bayar" value="tunai">
+            <button class="btn btn-success btn-block" type="submit">
+              <i class="fas fa-check mr-1"></i> Tandai Lunas (Tunai)
+            </button>
+          </form>
+
+          <hr class="my-2">
+          <div class="text-muted small mb-2 font-weight-bold">QRIS</div>
+
+          <form action="/admin/tagihan/<%= tagihan.id %>/qris-assign" method="post" class="mb-2">
+            <button class="btn btn-primary btn-block" type="submit">
+              <i class="fas fa-qrcode mr-1"></i> <%= tagihan.qris_amount_unique ? 'Generate QRIS Ulang' : 'Siapkan QRIS' %>
+            </button>
+          </form>
+          <% if (tagihan.qris_amount_unique) { %>
+            <div class="alert alert-light border py-2 px-3 mb-2" style="font-size:0.82rem;">
+              <div class="text-muted">Nominal QRIS:</div>
+              <strong><%= helpers.formatCurrency(tagihan.qris_amount_unique) %></strong>
+              <span class="text-muted">(kode <%= String(tagihan.qris_unique_code || 0).padStart(3, '0') %>)</span>
+            </div>
+            <form action="/admin/tagihan/<%= tagihan.id %>/qris-assign?force=1" method="post" class="mb-2">
+              <button class="btn btn-warning btn-block btn-sm" type="submit">
+                <i class="fas fa-redo mr-1"></i> Regenerate QRIS
+              </button>
+            </form>
+            <form action="/admin/tagihan/<%= tagihan.id %>/qris-clear" method="post" class="mb-2">
+              <button class="btn btn-outline-danger btn-block btn-sm" type="submit">
+                <i class="fas fa-times mr-1"></i> Hapus Kode QRIS
+              </button>
+            </form>
+          <% } %>
+
+          <hr class="my-2">
+          <form action="/admin/tagihan/<%= tagihan.id %>/wa-qris" method="post">
+            <button class="btn btn-success btn-block" type="submit">
+              <i class="fab fa-whatsapp mr-1"></i> Kirim WA QRIS ke Pelanggan
+            </button>
+          </form>
+
+        <% } else { %>
+          <div class="alert alert-success mb-0">
+            <i class="fas fa-check-circle mr-1"></i> Tagihan sudah lunas.
+          </div>
+          <% if (tagihan.pembayaran_log_id) { %>
+            <a href="/kasir/kwitansi/<%= tagihan.pembayaran_log_id %>" class="btn btn-outline-primary btn-block mt-2" target="_blank">
+              <i class="fas fa-receipt mr-1"></i> Lihat Kwitansi
+            </a>
+          <% } %>
         <% } %>
       </div>
     </div>
-  </div>
-  <div class="col-lg-4">
-    <div class="card card-info">
-      <div class="card-header"><h3 class="card-title">Aksi</h3></div>
-      <div class="card-body">
-        <% if (tagihan.status_bayar !== 'lunas') { %>
-          <form action="/admin/tagihan/<%= tagihan.id %>/lunas" method="post" class="mb-2">
-            <input type="hidden" name="metode_bayar" value="tunai">
-            <button class="btn btn-success btn-block" type="submit">Tandai Lunas (Tunai)</button>
-          </form>
-          <form action="/admin/tagihan/<%= tagihan.id %>/qris-assign" method="post" class="mb-2">
-            <button class="btn btn-primary btn-block" type="submit"><%= tagihan.qris_amount_unique ? 'QRIS Ulang' : 'Siapkan QRIS' %></button>
-          </form>
-          <% if (tagihan.qris_amount_unique) { %>
-            <form action="/admin/tagihan/<%= tagihan.id %>/qris-assign?force=1" method="post" class="mb-2">
-              <button class="btn btn-warning btn-block" type="submit">Regenerate QRIS</button>
-            </form>
-            <form action="/admin/tagihan/<%= tagihan.id %>/qris-clear" method="post" class="mb-2">
-              <button class="btn btn-outline-danger btn-block" type="submit">Clear QRIS</button>
-            </form>
+
+    <%# Info Tagihan Summary %>
+    <div class="card card-outline card-secondary">
+      <div class="card-header"><h3 class="card-title"><i class="fas fa-info-circle mr-1"></i> Info Tagihan</h3></div>
+      <div class="card-body p-0">
+        <table class="table table-sm table-borderless mb-0" style="font-size:0.85rem;">
+          <tr><th class="pl-3 text-muted" width="45%">ID Tagihan</th><td>#<%= tagihan.id %></td></tr>
+          <tr><th class="pl-3 text-muted">Periode Tagihan</th><td><%= breakdown.periode %></td></tr>
+          <tr><th class="pl-3 text-muted">Periode Baca</th><td><%= breakdown.periodeBaca %></td></tr>
+          <tr><th class="pl-3 text-muted">Mode</th>
+            <td><span class="badge badge-<%= tagihan.generated_mode === 'auto' ? 'primary' : 'secondary' %>"><%= tagihan.generated_mode || 'manual' %></span></td>
+          </tr>
+          <tr><th class="pl-3 text-muted">Dibuat</th><td><%= tagihan.generated_at ? helpers.formatDate(tagihan.generated_at) : '-' %></td></tr>
+          <% if (tagihan.foto_bukti) { %>
+            <tr>
+              <th class="pl-3 text-muted">Foto Meter</th>
+              <td><a href="<%= tagihan.foto_bukti %>" target="_blank" class="btn btn-xs btn-outline-secondary"><i class="fas fa-image mr-1"></i>Lihat</a></td>
+            </tr>
           <% } %>
-          <form action="/admin/tagihan/<%= tagihan.id %>/wa-qris" method="post">
-            <button class="btn btn-success btn-block" type="submit">Kirim WA QRIS</button>
-          </form>
-        <% } else { %>
-          <div class="alert alert-success mb-0">Tagihan sudah lunas.</div>
-        <% } %>
+        </table>
       </div>
     </div>
   </div>
 </div>
 
-<%- include('../partials/admin-footer') %>
+<script>
+  var printerClasses = ['thermal-58', 'thermal-80'];
+  function setPrinterSize(size) {
+    printerClasses.forEach(function(c) { document.body.classList.remove(c); });
+    if (size === 'thermal-58') document.body.classList.add('thermal-58');
+    else if (size === 'thermal-80') document.body.classList.add('thermal-80');
+    localStorage.setItem('pamsimas_printer_size', size);
+  }
+  (function() {
+    var saved = localStorage.getItem('pamsimas_printer_size') || 'normal';
+    if (saved !== 'normal') setPrinterSize(saved);
+  })();
+</script>
 
+<%- include('../partials/admin-footer') %>

@@ -1,0 +1,139 @@
+<%- include('../partials/admin-header', { title, activeMenu: 'pengaturan' }) %>
+
+<div class="mb-3">
+  <a href="/admin/pengaturan" class="btn btn-default"><i class="fas fa-arrow-left"></i> Kembali ke Pengaturan</a>
+</div>
+
+<div class="row">
+  <% golongan.forEach(g => { %>
+    <div class="col-md-4">
+      <div class="card card-outline <%= g.kode_golongan === 'rumah_tangga' ? 'card-primary' : (g.kode_golongan === 'sosial' ? 'card-success' : 'card-warning') %>">
+        <div class="card-header">
+          <h3 class="card-title font-weight-bold">
+            <i class="fas <%= g.kode_golongan === 'rumah_tangga' ? 'fa-home' : (g.kode_golongan === 'sosial' ? 'fa-hand-holding-heart' : 'fa-building') %> mr-2"></i>
+            <%= g.nama_golongan %>
+          </h3>
+        </div>
+        <div class="card-body">
+          <form action="/admin/tarif-golongan/<%= g.kode_golongan %>" method="post">
+            <div class="form-group">
+              <label>Nama Golongan</label>
+              <input type="text" name="nama_golongan" class="form-control" value="<%= g.nama_golongan %>" required>
+            </div>
+            
+            <div class="form-row">
+              <div class="form-group col-md-6">
+                <label>Biaya Admin</label>
+                <div class="input-group">
+                  <div class="input-group-prepend"><span class="input-group-text">Rp</span></div>
+                  <input type="number" name="biaya_admin" class="form-control" value="<%= g.biaya_admin %>" required min="0">
+                </div>
+              </div>
+              <div class="form-group col-md-6">
+                <label>Min. Pemakaian</label>
+                <div class="input-group">
+                  <input type="number" name="minimum_pemakaian" class="form-control" value="<%= g.minimum_pemakaian %>" required min="0" step="0.1">
+                  <div class="input-group-append"><span class="input-group-text">m³</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input switch-progresif" id="switch-<%= g.kode_golongan %>" name="is_progresif" value="1" <%= g.is_progresif ? 'checked' : '' %>>
+                <label class="custom-control-label" for="switch-<%= g.kode_golongan %>">Tarif Progresif</label>
+              </div>
+            </div>
+
+            <!-- Bagian Tarif Flat -->
+            <div class="form-group section-flat-<%= g.kode_golongan %>" style="<%= g.is_progresif ? 'display: none;' : '' %>">
+              <label>Tarif Flat per m³</label>
+              <div class="input-group">
+                <div class="input-group-prepend"><span class="input-group-text">Rp</span></div>
+                <input type="number" name="harga_flat" class="form-control" value="<%= g.harga_flat %>" min="0">
+              </div>
+            </div>
+
+            <!-- Bagian Tarif Progresif -->
+            <div class="section-progresif-<%= g.kode_golongan %>" style="<%= g.is_progresif ? '' : 'display: none;' %>">
+              <div class="alert alert-light border p-2 mb-3">
+                <small class="text-muted"><i class="fas fa-info-circle"></i> Tarif dibagi menjadi 3 blok pemakaian air.</small>
+              </div>
+              
+              <!-- Blok 1 -->
+              <div class="card card-light mb-2">
+                <div class="card-body p-2">
+                  <span class="badge badge-info mb-2">Blok 1</span>
+                  <div class="form-row">
+                    <div class="form-group col-md-6 mb-0">
+                      <label class="small">Batas Blok 1 (m³)</label>
+                      <input type="number" name="batas_blok_1" class="form-control form-control-sm" value="<%= g.batas_blok_1 %>" min="1">
+                    </div>
+                    <div class="form-group col-md-6 mb-0">
+                      <label class="small">Tarif Blok 1</label>
+                      <input type="number" name="harga_blok_1" class="form-control form-control-sm" value="<%= g.harga_blok_1 %>" min="0">
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Blok 2 -->
+              <div class="card card-light mb-2">
+                <div class="card-body p-2">
+                  <span class="badge badge-info mb-2">Blok 2</span>
+                  <div class="form-row">
+                    <div class="form-group col-md-6 mb-0">
+                      <label class="small">Batas Blok 2 (m³)</label>
+                      <input type="number" name="batas_blok_2" class="form-control form-control-sm" value="<%= g.batas_blok_2 %>" min="1">
+                    </div>
+                    <div class="form-group col-md-6 mb-0">
+                      <label class="small">Tarif Blok 2</label>
+                      <input type="number" name="harga_blok_2" class="form-control form-control-sm" value="<%= g.harga_blok_2 %>" min="0">
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Blok 3 -->
+              <div class="card card-light mb-3">
+                <div class="card-body p-2">
+                  <span class="badge badge-info mb-2">Blok 3 (di atas Blok 2)</span>
+                  <div class="form-group mb-0">
+                    <label class="small">Tarif Blok 3</label>
+                    <input type="number" name="harga_blok_3" class="form-control form-control-sm" value="<%= g.harga_blok_3 %>" min="0">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-block <%= g.kode_golongan === 'rumah_tangga' ? 'btn-primary' : (g.kode_golongan === 'sosial' ? 'btn-success' : 'btn-warning') %> mt-3">
+              <i class="fas fa-save mr-1"></i> Simpan Tarif <%= g.nama_golongan %>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  <% }) %>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.switch-progresif').forEach(sw => {
+      sw.addEventListener('change', function () {
+        const kode = this.id.replace('switch-', '');
+        const sectionFlat = document.querySelector('.section-flat-' + kode);
+        const sectionProgresif = document.querySelector('.section-progresif-' + kode);
+        
+        if (this.checked) {
+          sectionFlat.style.display = 'none';
+          sectionProgresif.style.display = '';
+        } else {
+          sectionFlat.style.display = '';
+          sectionProgresif.style.display = 'none';
+        }
+      });
+    });
+  });
+</script>
+
+<%- include('../partials/admin-footer') %>

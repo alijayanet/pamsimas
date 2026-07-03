@@ -224,10 +224,44 @@ function deleteReading(req, res) {
   return res.redirect('/catter');
 }
 
+function apiListPelanggan(req, res) {
+  try {
+    const db = require('../config/database');
+    const list = pelangganModel.listAll();
+    const result = list.map(p => {
+      const lastReading = meterModel.getLastReadingByPelanggan(p.id);
+      const avgRow = db.prepare(`
+        SELECT AVG(total_kubik) AS avg_kubik
+        FROM (
+          SELECT total_kubik
+          FROM pencatatan_meteran
+          WHERE pelanggan_id = ?
+          ORDER BY tahun DESC, bulan DESC, id DESC
+          LIMIT 3
+        )
+      `).get(p.id);
+      return {
+        id: p.id,
+        no_meteran: p.no_meteran,
+        nama: p.nama,
+        alamat: p.alamat,
+        no_whatsapp: p.no_whatsapp,
+        golongan_id: p.golongan_id,
+        meteran_awal: lastReading ? lastReading.meteran_akhir : 0,
+        avg_usage: avgRow?.avg_kubik ? parseFloat(avgRow.avg_kubik.toFixed(2)) : null
+      };
+    });
+    return res.json({ success: true, pelanggan: result });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+}
+
 module.exports = {
   showDashboard,
   storeReading,
   showEditReading,
   updateReading,
-  deleteReading
+  deleteReading,
+  apiListPelanggan
 };

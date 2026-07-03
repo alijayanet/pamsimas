@@ -46,6 +46,13 @@
       $('#meterPhotoPreviewModal').on('hidden.bs.modal', function () {
         previewImage.src = '';
       });
+
+      // Auto dismiss flash alerts after 3.5 seconds
+      setTimeout(function() {
+        $('.alert').fadeTo(500, 0).slideUp(500, function() {
+          $(this).remove();
+        });
+      }, 3500);
     })();
   </script>
 </body>

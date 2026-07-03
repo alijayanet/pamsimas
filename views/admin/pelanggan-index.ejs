@@ -11,6 +11,7 @@
         <tr>
           <th>No. Meter</th>
           <th>Nama</th>
+          <th>Golongan</th>
           <th>Alamat</th>
           <th>WA</th>
           <th>Status</th>
@@ -22,6 +23,7 @@
           <tr>
             <td><%= item.no_meteran %></td>
             <td><%= item.nama %></td>
+            <td><%= item.nama_golongan || '-' %></td>
             <td><%= item.alamat %></td>
             <td><%= item.no_whatsapp || '-' %></td>
             <td><span class="badge badge-<%= item.status_tagihan_terakhir === 'lunas' ? 'success' : 'warning' %>"><%= item.status_tagihan_terakhir || 'belum ada' %></span></td>

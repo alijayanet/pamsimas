@@ -9,7 +9,13 @@ const apiRoutes = require('./apiRoutes');
 const { hasAdmin } = require('../controllers/setupController');
 const publicController = require('../controllers/publicController');
 
+const path = require('path');
+
 const router = express.Router();
+
+router.get('/service-worker.js', (req, res) => {
+  res.sendFile(path.resolve(__dirname, '../../public/service-worker.js'));
+});
 
 router.get('/', (req, res) => {
   if (!hasAdmin()) {

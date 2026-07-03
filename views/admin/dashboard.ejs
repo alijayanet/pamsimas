@@ -96,6 +96,85 @@
 </div>
 
 <div class="row">
+  <div class="col-12">
+    <div class="card card-info card-outline">
+      <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-file-export mr-2"></i>Unduh Laporan Keuangan & Pemakaian (CSV)</h3>
+      </div>
+      <div class="card-body">
+        <form action="/admin/laporan/export-csv" method="get">
+          <div class="row align-items-end">
+            <div class="col-md-3 form-group">
+              <label>Jenis Laporan</label>
+              <select name="jenis" id="export-jenis" class="form-control" required>
+                <option value="bku">Buku Kas Umum (Pemasukan/Pengeluaran)</option>
+                <option value="rekap_pemakaian">Rekap Pemakaian Air Pelanggan</option>
+                <option value="tunggakan">Daftar Tunggakan Tagihan</option>
+              </select>
+            </div>
+            
+            <div class="col-md-3 form-group filter-tanggal">
+              <label>Dari Tanggal</label>
+              <input type="date" name="dari" class="form-control" id="export-dari">
+            </div>
+            <div class="col-md-3 form-group filter-tanggal">
+              <label>Sampai Tanggal</label>
+              <input type="date" name="sampai" class="form-control" id="export-sampai">
+            </div>
+
+            <div class="col-md-3 form-group filter-periode" style="display: none;">
+              <label>Bulan</label>
+              <select name="bulan" class="form-control">
+                <% for(let m=1; m<=12; m++) { %>
+                  <option value="<%= m %>" <%= m === (new Date().getMonth() + 1) ? 'selected' : '' %>><%= m %></option>
+                <% } %>
+              </select>
+            </div>
+            <div class="col-md-3 form-group filter-periode" style="display: none;">
+              <label>Tahun</label>
+              <input type="number" name="tahun" class="form-control" value="<%= new Date().getFullYear() %>" min="2000" max="3000">
+            </div>
+
+            <div class="col-md-3 form-group">
+              <button type="submit" class="btn btn-info btn-block font-weight-bold">
+                <i class="fas fa-download mr-1"></i> Unduh File CSV
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const exportJenis = document.getElementById('export-jenis');
+    if (exportJenis) {
+      const filterTanggal = document.querySelectorAll('.filter-tanggal');
+      const filterPeriode = document.querySelectorAll('.filter-periode');
+      
+      const now = new Date();
+      const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+      const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+      
+      document.getElementById('export-dari').value = firstDay;
+      document.getElementById('export-sampai').value = lastDay;
+
+      exportJenis.addEventListener('change', function () {
+        if (this.value === 'bku') {
+          filterTanggal.forEach(el => el.style.display = 'block');
+          filterPeriode.forEach(el => el.style.display = 'none');
+        } else {
+          filterTanggal.forEach(el => el.style.display = 'none');
+          filterPeriode.forEach(el => el.style.display = 'block');
+        }
+      });
+    }
+  });
+</script>
+
+<div class="row">
   <div class="col-lg-8">
     <div class="card">
       <div class="card-header"><h3 class="card-title">Grafik Keuangan Bulanan</h3></div>
@@ -260,17 +339,29 @@
     data: {
       labels: financeLabelsData,
       datasets: [
-        { label: 'Pemasukan', backgroundColor: '#28a745', data: incomeSeries },
-        { label: 'Pengeluaran', backgroundColor: '#dc3545', data: expenseSeries }
+        { label: 'Pemasukan', backgroundColor: '#0d9488', borderRadius: 6, data: incomeSeries },
+        { label: 'Pengeluaran', backgroundColor: '#ef4444', borderRadius: 6, data: expenseSeries }
       ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { labels: { font: { family: 'Inter' } } }
+      }
     }
   });
 
   new Chart(document.getElementById('paymentChart'), {
     type: 'doughnut',
     data: {
-      labels: paymentLabelsData,
-      datasets: [{ data: paymentSeries, backgroundColor: ['#ffc107', '#28a745'] }]
+      labels: paymentLabelsData.map(l => l === 'belum_bayar' ? 'Belum Bayar' : 'Lunas'),
+      datasets: [{ data: paymentSeries, backgroundColor: ['#f59e0b', '#10b981'], borderConfirm: 0 }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { family: 'Inter' } } }
+      }
     }
   });
 
@@ -278,7 +369,22 @@
     type: 'line',
     data: {
       labels: cubicLabelsData,
-      datasets: [{ label: 'Kubik Terjual', borderColor: '#007bff', fill: false, data: cubicSeries }]
+      datasets: [{ 
+        label: 'Kubik Terjual', 
+        borderColor: '#2563eb', 
+        backgroundColor: 'rgba(37, 99, 235, 0.05)',
+        fill: true, 
+        tension: 0.3,
+        borderWidth: 3,
+        pointBackgroundColor: '#2563eb',
+        data: cubicSeries 
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { labels: { font: { family: 'Inter' } } }
+      }
     }
   });
 </script>

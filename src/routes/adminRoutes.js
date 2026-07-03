@@ -48,4 +48,16 @@ router.post('/whatsapp/qris-test', adminController.testQrisWhatsapp);
 router.post('/whatsapp/qris-reminder', adminController.sendQrisReminderBulk);
 router.post('/tagihan/:id/wa-qris', adminController.sendQrisToCustomer);
 
+// Golongan Tarif
+router.get('/tarif-golongan', adminController.showTarifGolongan);
+router.post('/tarif-golongan/:kode', adminController.updateTarifGolongan);
+
+// Broadcast Reminder Tunggakan
+router.post('/whatsapp/broadcast-reminder', adminController.broadcastReminderTunggakan);
+router.post('/whatsapp/send-reminder-single/:id', adminController.sendReminderSingle);
+
+// Ekspor Laporan CSV
+router.get('/laporan/csv', adminController.exportLaporanCsv);
+router.get('/laporan/export-csv', adminController.exportLaporanCsv);
+
 module.exports = router;

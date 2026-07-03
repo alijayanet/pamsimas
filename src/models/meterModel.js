@@ -73,7 +73,9 @@ const unbilledByPeriodStmt = db.prepare(`
     pm.*,
     p.nama,
     p.no_meteran,
-    p.no_whatsapp
+    p.no_whatsapp,
+    p.golongan_id,
+    p.id AS pelanggan_id
   FROM pencatatan_meteran pm
   JOIN pelanggan p ON p.id = pm.pelanggan_id
   LEFT JOIN tagihan t ON t.pencatatan_id = pm.id

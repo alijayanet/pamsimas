@@ -1,176 +1,342 @@
 <%- include('../partials/public-header', { title, bodyClass: 'bg-light', containerClass: 'container py-3 py-md-5' }) %>
 
-<div class="card public-hero border-0 shadow-sm mb-3">
-  <div class="card-body p-4">
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
-      <div class="d-flex align-items-center mb-3 mb-md-0">
-        <% if (appConfig?.logo_url) { %>
-          <img src="<%= appConfig.logo_url %>" alt="Logo" class="public-logo mr-3">
-        <% } else { %>
-          <div class="public-logo-fallback mr-3"><i class="fas fa-tint"></i></div>
-        <% } %>
-        <div>
-          <div class="h4 mb-1 text-white"><%= appConfig?.nama_aplikasi || 'PAMSIMAS' %></div>
-          <div class="public-hero-muted"><%= appConfig?.nama_instansi || 'Unit Pengelola PAMSIMAS' %></div>
-        </div>
-      </div>
-      <div class="d-flex flex-wrap">
-        <a href="/pelanggan/cek" class="btn btn-light mr-2 mb-2">Cek Tagihan</a>
-        <a href="/pelanggan/login" class="btn btn-primary mr-2 mb-2">Login Pelanggan</a>
-        <a href="/login" class="btn btn-outline-light mb-2">Login Petugas</a>
-      </div>
-    </div>
-  </div>
-</div>
-
-<% if (currentUser) { %>
-  <div class="alert alert-info d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
-    <div class="mb-2 mb-md-0">
-      Anda login sebagai <strong><%= currentUser.nama %></strong> (<%= currentUser.role %>).
-    </div>
-    <% if (dashboardUrl) { %>
-      <a href="<%= dashboardUrl %>" class="btn btn-sm btn-primary">Buka Dashboard</a>
-    <% } %>
-  </div>
-<% } %>
-
-<div class="row">
-  <div class="col-lg-7 mb-3">
-    <div class="card shadow-sm border-0">
-      <div class="card-body p-4">
-        <div class="h5 mb-1"><%= (appConfig?.public_home_headline || '').trim() || 'Informasi Tarif' %></div>
-        <div class="text-muted mb-3"><%= (appConfig?.public_home_tagline || '').trim() || 'Tarif ini diambil langsung dari pengaturan admin (dinamis).' %></div>
-
-        <div class="row">
-          <div class="col-sm-6 mb-3">
-            <div class="border rounded p-3 h-100">
-              <div class="small text-muted mb-1">Harga per m3</div>
-              <div class="h5 mb-0"><%= helpers.formatCurrency(pricing?.harga_per_kubik || 0) %> / m3</div>
-            </div>
-          </div>
-          <div class="col-sm-6 mb-3">
-            <div class="border rounded p-3 h-100">
-              <div class="small text-muted mb-1">Minimum abonemen</div>
-              <div class="h5 mb-0"><%= Number(pricing?.minimum_pemakaian_kubik || 0) %> m3</div>
-            </div>
-          </div>
-          <div class="col-sm-6 mb-3">
-            <div class="border rounded p-3 h-100">
-              <div class="small text-muted mb-1">Biaya admin</div>
-              <div class="h5 mb-0"><%= helpers.formatCurrency(pricing?.biaya_admin || 0) %></div>
-            </div>
-          </div>
-          <div class="col-sm-6 mb-3">
-            <div class="border rounded p-3 h-100">
-              <div class="small text-muted mb-1">Denda keterlambatan</div>
-              <div class="h5 mb-0"><%= helpers.formatCurrency(pricing?.denda_keterlambatan || 0) %></div>
-            </div>
+<div class="landing-page-wrap">
+  <!-- Premium Gradient Hero Section -->
+  <div class="landing-hero border-0 mb-4">
+    <div class="landing-hero-content">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
+        <div class="hero-branding mb-3 mb-md-0">
+          <% if (appConfig?.logo_url) { %>
+            <img src="<%= appConfig.logo_url %>" alt="Logo" class="public-logo">
+          <% } else { %>
+            <div class="hero-logo-fallback"><i class="fas fa-tint"></i></div>
+          <% } %>
+          <div>
+            <div class="h4 mb-1 text-white font-weight-bold"><%= appConfig?.nama_aplikasi || 'PAMSIMAS' %></div>
+            <div class="small text-white-50"><%= appConfig?.nama_instansi || 'Unit Pengelola PAMSIMAS' %></div>
           </div>
         </div>
-
-        <div class="alert alert-light border mb-0">
-          <div class="font-weight-bold mb-1">Catatan</div>
-          <div class="text-muted">
-            Kubik yang ditagihkan mengikuti aturan abonemen: <strong>kubik ditagih = max(pemakaian asli, minimum abonemen)</strong>.
-          </div>
+      </div>
+      
+      <div class="my-4 my-md-5">
+        <h1 class="display-4 font-weight-bold text-white mb-2" style="line-height: 1.2;">
+          <%= (appConfig?.public_home_headline || '').trim() || 'Informasi PAMSIMAS' %>
+        </h1>
+        <p class="lead text-white-50 mb-4" style="max-width: 720px; font-size: 1.15rem; line-height: 1.6;">
+          <%= (appConfig?.public_home_tagline || '').trim() || 'Cek tarif, jadwal pencatatan, dan pembayaran tagihan secara online.' %>
+        </p>
+        <div class="hero-btn-group">
+          <a href="/pelanggan/cek" class="btn-premium btn-premium-primary"><i class="fas fa-search"></i> Cek Tagihan</a>
+          <a href="/pelanggan/login" class="btn-premium btn-premium-outline"><i class="fas fa-user"></i> Portal Pelanggan</a>
+          <a href="/login" class="btn-premium btn-premium-outline"><i class="fas fa-user-shield"></i> Portal Petugas</a>
         </div>
       </div>
     </div>
   </div>
 
-  <div class="col-lg-5 mb-3">
-    <% if ((appConfig?.public_profile_text || '').trim()) { %>
-      <div class="card shadow-sm border-0 mb-3">
-        <div class="card-body p-4">
-          <div class="h5 mb-2">Profil</div>
-          <div class="text-muted" style="white-space: pre-line;"><%= appConfig.public_profile_text %></div>
+  <!-- Active Session Info -->
+  <% if (currentUser) { %>
+    <div class="alert alert-info border-0 shadow-sm d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4" style="border-radius: 1.25rem; background: rgba(14, 165, 233, 0.08); border-left: 4px solid var(--primary-color) !important; color: #0f172a;">
+      <div class="mb-2 mb-md-0">
+        <i class="fas fa-info-circle text-primary mr-2"></i> Anda login sebagai <strong><%= currentUser.nama %></strong> (<%= currentUser.role %>).
+      </div>
+      <% if (dashboardUrl) { %>
+        <a href="<%= dashboardUrl %>" class="btn btn-sm btn-primary px-3 rounded-pill" style="font-weight: 600;">Buka Dashboard <i class="fas fa-arrow-right ml-1"></i></a>
+      <% } %>
+    </div>
+  <% } %>
+
+  <!-- Feature Highlights -->
+  <div class="row mb-5">
+    <div class="col-md-4 mb-3 mb-md-0">
+      <div class="feature-card hover-lift">
+        <div class="feature-icon-wrapper feature-icon-primary"><i class="fas fa-tint"></i></div>
+        <h5 class="font-weight-bold mb-2">Transparansi Meter</h5>
+        <p class="text-muted small mb-0">Petugas catter mencatat dan mengunggah foto bukti meteran Anda langsung dari lapangan setiap bulan.</p>
+      </div>
+    </div>
+    <div class="col-md-4 mb-3 mb-md-0">
+      <div class="feature-card hover-lift">
+        <div class="feature-icon-wrapper feature-icon-secondary"><i class="fas fa-qrcode"></i></div>
+        <h5 class="font-weight-bold mb-2">Pembayaran QRIS</h5>
+        <p class="text-muted small mb-0">Bayar tagihan secara instan menggunakan QRIS dinamis/statik dari dompet digital maupun mobile banking.</p>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="feature-card hover-lift">
+        <div class="feature-icon-wrapper feature-icon-accent"><i class="fab fa-whatsapp text-warning"></i></div>
+        <h5 class="font-weight-bold mb-2">Notifikasi WhatsApp</h5>
+        <p class="text-muted small mb-0">Dapatkan rincian tagihan otomatis dan bukti pembayaran yang langsung terkirim ke WhatsApp Anda.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Left Column: Pricing Parameters & Calculator -->
+    <div class="col-lg-7 mb-4">
+      <!-- Interactive Bill Estimator -->
+      <div class="premium-card mb-4">
+        <div class="premium-card-header">
+          <h5 class="font-weight-bold mb-1"><i class="fas fa-calculator text-primary mr-2"></i> Kalkulator Estimasi Tagihan</h5>
+          <p class="text-muted small mb-0">Hitung perkiraan biaya air bulanan Anda secara mandiri.</p>
+        </div>
+        <div class="premium-card-body pt-2">
+          <div class="calculator-box">
+            <div class="form-group mb-3">
+              <label class="font-weight-bold small text-dark">Jumlah Pemakaian Air (m³)</label>
+              <div class="input-group">
+                <input type="number" id="calcUsage" class="form-control font-weight-bold" value="10" min="0" step="0.5" style="border-radius: 0.75rem 0 0 0.75rem; height: 46px;">
+                <div class="input-group-append">
+                  <span class="input-group-text font-weight-bold px-3" style="border-radius: 0 0.75rem 0.75rem 0; background: #cbd5e1;">m³</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="calculator-result-card mb-3">
+              <div class="small text-success mb-1 font-weight-bold">Estimasi Total Tagihan</div>
+              <div class="calculator-result-value" id="calcTotal">Rp0</div>
+            </div>
+
+            <div class="calculator-breakdown">
+              <div class="calculator-breakdown-row">
+                <span class="text-muted">Pemakaian Riil</span>
+                <span class="font-weight-bold text-dark" id="calcRealUsage">0 m³</span>
+              </div>
+              <div class="calculator-breakdown-row">
+                <span class="text-muted">Pemakaian Ditagih (Abonemen min. <%= Number(pricing?.minimum_pemakaian_kubik || 0) %> m³)</span>
+                <span class="font-weight-bold text-dark" id="calcBilledUsage">0 m³</span>
+              </div>
+              <div class="calculator-breakdown-row">
+                <span class="text-muted">Biaya Air (<%= helpers.formatCurrency(pricing?.harga_per_kubik || 0) %>/m³)</span>
+                <span class="font-weight-bold text-dark" id="calcAirCost">Rp0</span>
+              </div>
+              <div class="calculator-breakdown-row">
+                <span class="text-muted">Biaya Administrasi</span>
+                <span class="font-weight-bold text-dark" id="calcAdminCost"><%= helpers.formatCurrency(pricing?.biaya_admin || 0) %></span>
+              </div>
+              <div class="calculator-breakdown-row">
+                <span class="text-muted">Denda Keterlambatan (Jika Terlambat)</span>
+                <span class="font-weight-bold text-danger" id="calcDendaCost"><%= helpers.formatCurrency(pricing?.denda_keterlambatan || 0) %></span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-    <% } %>
 
-    <div class="card shadow-sm border-0 mb-3">
-      <div class="card-body p-4">
-        <div class="h5 mb-2">Jadwal & Alur</div>
-        <div class="text-muted mb-3">Agar pencatatan dan penagihan rapi per periode.</div>
-
-        <div class="border rounded p-3 mb-3">
-          <div class="small text-muted mb-1">Window input meter</div>
-          <div class="font-weight-bold">Tanggal <%= collectionWindow.startDay %> – <%= collectionWindow.endDay %></div>
-          <div class="small text-muted mt-1">Input pada periode ini akan menjadi tagihan bulan berikutnya.</div>
+      <!-- Pricing Details Card -->
+      <div class="premium-card">
+        <div class="premium-card-header">
+          <h5 class="font-weight-bold mb-1"><i class="fas fa-tag text-primary mr-2"></i> Detail Informasi Tarif</h5>
+          <p class="text-muted small mb-0">Aturan tarif dinamis yang saat ini berlaku.</p>
         </div>
+        <div class="premium-card-body pt-2">
+          <div class="row">
+            <div class="col-sm-6 mb-3">
+              <div class="border rounded p-3 h-100 bg-light">
+                <div class="small text-muted mb-1">Harga per m³</div>
+                <div class="h5 mb-0 font-weight-bold text-primary"><%= helpers.formatCurrency(pricing?.harga_per_kubik || 0) %></div>
+              </div>
+            </div>
+            <div class="col-sm-6 mb-3">
+              <div class="border rounded p-3 h-100 bg-light">
+                <div class="small text-muted mb-1">Minimum Abonemen</div>
+                <div class="h5 mb-0 font-weight-bold text-primary"><%= Number(pricing?.minimum_pemakaian_kubik || 0) %> m³</div>
+              </div>
+            </div>
+            <div class="col-sm-6 mb-3 bg-light">
+              <div class="border rounded p-3 h-100">
+                <div class="small text-muted mb-1">Biaya Admin</div>
+                <div class="h5 mb-0 font-weight-bold text-primary"><%= helpers.formatCurrency(pricing?.biaya_admin || 0) %></div>
+              </div>
+            </div>
+            <div class="col-sm-6 mb-3 bg-light">
+              <div class="border rounded p-3 h-100">
+                <div class="small text-muted mb-1">Denda Keterlambatan</div>
+                <div class="h5 mb-0 font-weight-bold text-danger"><%= helpers.formatCurrency(pricing?.denda_keterlambatan || 0) %></div>
+              </div>
+            </div>
+          </div>
 
-        <div class="border rounded p-3">
-          <div class="small text-muted mb-1">Generate tagihan otomatis</div>
-          <div class="font-weight-bold">Mulai tanggal <%= autoGenerateDay %> setiap awal bulan</div>
-          <div class="small text-muted mt-1">Admin tetap bisa generate manual kapan saja.</div>
+          <div class="alert alert-light border-0 mb-0 mt-2" style="border-radius: 1rem; background: #f1f5f9; color: #1e293b;">
+            <div class="font-weight-bold mb-1"><i class="fas fa-info-circle text-primary"></i> Aturan Pemakaian Air</div>
+            <div class="small text-muted">
+              Perhitungan tagihan air mengikuti rumus abonemen: <strong>kubik ditagih = max(pemakaian asli, minimum abonemen)</strong>.
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="card shadow-sm border-0">
-      <div class="card-body p-4">
-        <div class="h5 mb-2">Kontak Loket</div>
-        <div class="text-muted mb-3">Informasi ini diambil dari pengaturan aplikasi.</div>
+    <!-- Right Column: Profil, Jadwal & Kontak -->
+    <div class="col-lg-5 mb-4">
+      <!-- Profile Card -->
+      <% if ((appConfig?.public_profile_text || '').trim()) { %>
+        <div class="premium-card mb-4">
+          <div class="premium-card-header">
+            <h5 class="font-weight-bold mb-1"><i class="fas fa-landmark text-primary mr-2"></i> Profil Pengelola</h5>
+          </div>
+          <div class="premium-card-body pt-2 text-muted" style="white-space: pre-line; line-height: 1.6; font-size: 0.92rem;">
+            <%= appConfig.public_profile_text %>
+          </div>
+        </div>
+      <% } %>
 
-        <div class="mb-2">
-          <div class="small text-muted">Alamat Loket</div>
-          <div><%= appConfig?.alamat_loket || '-' %></div>
+      <!-- Schedule Card -->
+      <div class="premium-card mb-4">
+        <div class="premium-card-header">
+          <h5 class="font-weight-bold mb-1"><i class="fas fa-calendar-alt text-primary mr-2"></i> Alur & Jadwal Kerja</h5>
+          <p class="text-muted small mb-0">Periode rutin pencatatan dan penagihan.</p>
         </div>
-        <div class="mb-3">
-          <div class="small text-muted">WhatsApp Loket</div>
-          <div><%= appConfig?.no_whatsapp_loket || '-' %></div>
+        <div class="premium-card-body pt-2">
+          <div class="visual-timeline">
+            <div class="timeline-item">
+              <div class="timeline-dot"></div>
+              <div class="timeline-content">
+                <div class="small text-muted font-weight-bold mb-1">TAHAP 1: PENCATATAN METER</div>
+                <div class="font-weight-bold text-primary">Tanggal <%= collectionWindow.startDay %> – <%= collectionWindow.endDay %></div>
+                <p class="small text-muted mb-0 mt-1">Petugas (catter) berkeliling ke rumah pelanggan untuk input meteran dan upload foto bukti.</p>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot"></div>
+              <div class="timeline-content">
+                <div class="small text-muted font-weight-bold mb-1">TAHAP 2: GENERATE TAGIHAN</div>
+                <div class="font-weight-bold text-primary">Setiap Tanggal <%= autoGenerateDay %> Awal Bulan</div>
+                <p class="small text-muted mb-0 mt-1">Sistem melakukan kalkulasi dan merilis tagihan resmi bagi seluruh pelanggan.</p>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot"></div>
+              <div class="timeline-content">
+                <div class="small text-muted font-weight-bold mb-1">TAHAP 3: LOKET PEMBAYARAN</div>
+                <div class="font-weight-bold text-success">Periode Terbuka</div>
+                <p class="small text-muted mb-0 mt-1">Pelanggan dapat melunasi tagihan langsung di loket kasir atau memindai QRIS.</p>
+              </div>
+            </div>
+          </div>
         </div>
-        <% if ((appConfig?.public_service_hours_text || '').trim()) { %>
+      </div>
+
+      <!-- Contact Card -->
+      <div class="premium-card">
+        <div class="premium-card-header">
+          <h5 class="font-weight-bold mb-1"><i class="fas fa-headset text-primary mr-2"></i> Kontak Layanan</h5>
+          <p class="text-muted small mb-0">Informasi alamat dan jam pelayanan loket.</p>
+        </div>
+        <div class="premium-card-body pt-2">
           <div class="mb-3">
-            <div class="small text-muted">Jam Layanan</div>
-            <div style="white-space: pre-line;"><%= appConfig.public_service_hours_text %></div>
+            <div class="small text-muted mb-1"><i class="fas fa-map-marker-alt text-primary mr-1"></i> Alamat Loket</div>
+            <div class="text-dark font-weight-bold"><%= appConfig?.alamat_loket || '-' %></div>
           </div>
-        <% } %>
-        <% if ((appConfig?.public_payment_info_text || '').trim()) { %>
-          <div class="mb-3">
-            <div class="small text-muted">Info Pembayaran</div>
-            <div style="white-space: pre-line;"><%= appConfig.public_payment_info_text %></div>
-          </div>
-        <% } %>
+          
+          <% if (appConfig?.no_whatsapp_loket) { %>
+            <div class="mb-3">
+              <div class="small text-muted mb-1"><i class="fab fa-whatsapp text-success mr-1"></i> WhatsApp Loket</div>
+              <div class="d-flex align-items-center flex-wrap">
+                <span class="font-weight-bold text-dark mr-3"><%= appConfig.no_whatsapp_loket %></span>
+                <a href="https://wa.me/<%= appConfig.no_whatsapp_loket.replace(/\D/g, '') %>" target="_blank" class="btn btn-sm btn-success rounded-pill px-3 mt-1 mt-sm-0"><i class="fab fa-whatsapp"></i> Chat WhatsApp</a>
+              </div>
+            </div>
+          <% } %>
 
-        <div class="d-flex flex-wrap">
-          <a href="/pelanggan/cek" class="btn btn-primary mr-2 mb-2">Cek Tagihan</a>
-          <a href="/pelanggan/login" class="btn btn-outline-primary mr-2 mb-2">Dashboard Pelanggan</a>
-          <a href="/kasir" class="btn btn-outline-secondary mb-2">Kasir / Loket</a>
+          <% if ((appConfig?.public_service_hours_text || '').trim()) { %>
+            <div class="mb-3">
+              <div class="small text-muted mb-1"><i class="fas fa-clock mr-1"></i> Jam Layanan</div>
+              <div class="text-dark font-weight-bold" style="white-space: pre-line;"><%= appConfig.public_service_hours_text %></div>
+            </div>
+          <% } %>
+
+          <% if ((appConfig?.public_payment_info_text || '').trim()) { %>
+            <div class="mb-0">
+              <div class="small text-muted mb-1"><i class="fas fa-credit-card mr-1"></i> Info Pembayaran</div>
+              <div class="text-dark font-weight-bold" style="white-space: pre-line;"><%= appConfig.public_payment_info_text %></div>
+            </div>
+          <% } %>
         </div>
       </div>
     </div>
   </div>
-</div>
 
-<div class="card shadow-sm border-0">
-  <div class="card-body p-4">
-    <div class="h5 mb-3">Ringkasan Sistem</div>
-    <div class="row">
-      <div class="col-md-4 mb-3">
-        <div class="border rounded p-3 h-100">
-          <div class="small text-muted mb-1">Total Pelanggan</div>
-          <div class="h4 mb-0"><%= summary?.total_pelanggan || 0 %></div>
-        </div>
-      </div>
-      <div class="col-md-4 mb-3">
-        <div class="border rounded p-3 h-100">
-          <div class="small text-muted mb-1">Tagihan Belum Lunas</div>
-          <div class="h4 mb-0"><%= summary?.tagihan_belum_lunas || 0 %></div>
-        </div>
-      </div>
-      <div class="col-md-4 mb-3">
-        <div class="border rounded p-3 h-100">
-          <div class="small text-muted mb-1">Metode Pembayaran</div>
-          <div class="mb-0">Loket & QRIS</div>
-        </div>
-      </div>
+  <!-- Bottom System Stats -->
+  <div class="premium-card mt-3">
+    <div class="premium-card-header">
+      <h5 class="font-weight-bold mb-1"><i class="fas fa-chart-bar text-primary mr-2"></i> Ringkasan Sistem PAMSIMAS</h5>
+      <p class="text-muted small mb-0">Informasi operasional terkini.</p>
     </div>
+    <div class="premium-card-body pt-2">
+      <div class="row">
+        <div class="col-md-4 mb-3 mb-md-0">
+          <div class="dashboard-stat-card">
+            <div class="dashboard-stat-icon stat-icon-info"><i class="fas fa-users"></i></div>
+            <div>
+              <div class="small text-muted mb-1">Total Pelanggan</div>
+              <div class="h3 font-weight-bold mb-0 text-dark"><%= summary?.total_pelanggan || 0 %></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4 mb-3 mb-md-0">
+          <div class="dashboard-stat-card">
+            <div class="dashboard-stat-icon stat-icon-warning"><i class="fas fa-file-invoice-dollar"></i></div>
+            <div>
+              <div class="small text-muted mb-1">Tagihan Belum Lunas</div>
+              <div class="h3 font-weight-bold mb-0 text-dark"><%= summary?.tagihan_belum_lunas || 0 %></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="dashboard-stat-card">
+            <div class="dashboard-stat-icon stat-icon-success"><i class="fas fa-qrcode"></i></div>
+            <div>
+              <div class="small text-muted mb-1">Metode Pembayaran</div>
+              <div class="h6 font-weight-bold mb-0 text-dark mt-1">Loket Kasir & QRIS Otomatis</div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-    <% if (appConfig?.qris_help_text) { %>
-      <div class="alert alert-info mb-0"><%= appConfig.qris_help_text %></div>
-    <% } %>
+      <% if (appConfig?.qris_help_text) { %>
+        <div class="alert alert-info border-0 mb-0 mt-4 d-flex align-items-start" style="border-radius: 1rem; background: rgba(14, 165, 233, 0.08); color: #0f172a;">
+          <i class="fas fa-lightbulb text-info mr-3 mt-1" style="font-size: 1.1rem;"></i>
+          <div class="small"><%= appConfig.qris_help_text %></div>
+        </div>
+      <% } %>
+    </div>
   </div>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const hargaPerKubik = <%= Number(pricing?.harga_per_kubik || 0) %>;
+    const minimumAbonemen = <%= Number(pricing?.minimum_pemakaian_kubik || 0) %>;
+    const biayaAdmin = <%= Number(pricing?.biaya_admin || 0) %>;
+    
+    const calcUsageInput = document.getElementById('calcUsage');
+    const calcRealUsage = document.getElementById('calcRealUsage');
+    const calcBilledUsage = document.getElementById('calcBilledUsage');
+    const calcAirCost = document.getElementById('calcAirCost');
+    const calcTotal = document.getElementById('calcTotal');
+    
+    function formatCurrency(val) {
+      return 'Rp' + val.toLocaleString('id-ID');
+    }
+
+    function updateEstimator() {
+      const val = Math.max(0, parseFloat(calcUsageInput.value) || 0);
+      const billedVal = Math.max(val, minimumAbonemen);
+      const airCost = billedVal * hargaPerKubik;
+      const total = airCost + biayaAdmin;
+      
+      calcRealUsage.textContent = val.toLocaleString('id-ID') + ' m³';
+      calcBilledUsage.textContent = billedVal.toLocaleString('id-ID') + ' m³';
+      calcAirCost.textContent = formatCurrency(airCost);
+      calcTotal.textContent = formatCurrency(total);
+    }
+    
+    if (calcUsageInput) {
+      calcUsageInput.addEventListener('input', updateEstimator);
+      updateEstimator();
+    }
+  });
+</script>
 
 <%- include('../partials/public-footer') %>

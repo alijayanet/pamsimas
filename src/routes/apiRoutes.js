@@ -1,6 +1,7 @@
 const express = require('express');
 const qrisWebhookController = require('../controllers/qrisWebhookController');
 const qrisStaticController = require('../controllers/qrisStaticController');
+const db = require('../config/database');
 
 const router = express.Router();
 
@@ -30,4 +31,27 @@ router.post('/webhook/v1/payment-notif', (req, res) => {
   return qrisWebhookController.handleMacrodroid(req, res);
 });
 
+// API: Rata-rata pemakaian 3 bulan terakhir untuk deteksi anomali
+router.get('/pelanggan/:id/avg-usage', (req, res) => {
+  try {
+    const row = db.prepare(`
+      SELECT AVG(total_kubik) AS avg_kubik, COUNT(*) AS jumlah_data
+      FROM (
+        SELECT total_kubik
+        FROM pencatatan_meteran
+        WHERE pelanggan_id = ?
+        ORDER BY tahun DESC, bulan DESC, id DESC
+        LIMIT 3
+      )
+    `).get(Number(req.params.id));
+    return res.json({
+      avg_kubik: row?.avg_kubik ? parseFloat(row.avg_kubik.toFixed(2)) : null,
+      jumlah_data: row?.jumlah_data || 0
+    });
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
+  }
+});
+
 module.exports = router;
+

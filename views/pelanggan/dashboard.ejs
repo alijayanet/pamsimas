@@ -245,18 +245,19 @@
               type: 'bar',
               label: 'Pemakaian (m3)',
               data: chartData.usage || [],
-              backgroundColor: 'rgba(13, 110, 253, 0.22)',
-              borderColor: '#0d6efd',
+              backgroundColor: 'rgba(37, 99, 235, 0.15)',
+              borderColor: '#2563eb',
               borderWidth: 1.5,
+              borderRadius: 4,
               yAxisID: 'y'
             },
             {
               type: 'line',
               label: 'Tagihan (Rp)',
               data: chartData.amount || [],
-              borderColor: '#16a34a',
-              backgroundColor: 'rgba(22, 163, 74, 0.14)',
-              borderWidth: 2,
+              borderColor: '#0d9488',
+              backgroundColor: 'rgba(13, 148, 136, 0.05)',
+              borderWidth: 2.5,
               tension: 0.35,
               fill: true,
               yAxisID: 'y1'
@@ -272,16 +273,22 @@
           },
           plugins: {
             legend: {
-              position: 'bottom'
+              position: 'bottom',
+              labels: { font: { family: 'Inter', weight: '500' } }
             }
           },
           scales: {
+            x: {
+              ticks: { font: { family: 'Inter' } }
+            },
             y: {
               beginAtZero: true,
               title: {
                 display: true,
-                text: 'm3'
-              }
+                text: 'm3',
+                font: { family: 'Inter', weight: 'bold' }
+              },
+              ticks: { font: { family: 'Inter' } }
             },
             y1: {
               beginAtZero: true,
@@ -290,6 +297,7 @@
                 drawOnChartArea: false
               },
               ticks: {
+                font: { family: 'Inter' },
                 callback: function (value) {
                   return 'Rp' + Number(value || 0).toLocaleString('id-ID');
                 }

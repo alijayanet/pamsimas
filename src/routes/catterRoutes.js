@@ -8,6 +8,7 @@ const router = express.Router();
 router.use(ensureRole('catter', 'admin'));
 
 router.get('/', catterController.showDashboard);
+router.get('/api/pelanggan', catterController.apiListPelanggan);
 router.post('/meteran', upload.single('foto_bukti'), catterController.storeReading);
 router.get('/pencatatan/:id/edit', catterController.showEditReading);
 router.post('/pencatatan/:id', upload.single('foto_bukti'), catterController.updateReading);

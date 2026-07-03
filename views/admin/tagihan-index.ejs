@@ -1,9 +1,12 @@
 <%- include('../partials/admin-header', { title, activeMenu: 'tagihan' }) %>
 
 <div class="row">
+  <%# ===== FORM GENERATE TAGIHAN ===== %>
   <div class="col-lg-6">
-    <div class="card card-success">
-      <div class="card-header"><h3 class="card-title">Generate Tagihan Manual</h3></div>
+    <div class="card card-success card-outline">
+      <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-plus-circle mr-2"></i>Generate Tagihan Manual</h3>
+      </div>
       <div class="card-body">
         <form action="/admin/tagihan/generate" method="post">
           <input type="hidden" name="redirect_to" value="/admin/tagihan?bulan=<%= bulan %>&tahun=<%= tahun %>&status=<%= encodeURIComponent(status) %>&keyword=<%= encodeURIComponent(keyword) %>&limit=<%= limit %>">
@@ -27,35 +30,39 @@
               <input type="number" name="billing_year" class="form-control" min="2000" max="3000" value="<%= generationDefaults.billingPeriod.tahun %>" required>
             </div>
           </div>
-          <p class="text-muted mb-3">Generate ini akan membuat invoice/tagihan dari data pencatatan meter yang belum punya tagihan.</p>
-          <button type="submit" class="btn btn-success">Generate Tagihan Manual</button>
+          <p class="text-muted small mb-3">Membuat tagihan dari data pencatatan meter yang belum memiliki tagihan.</p>
+          <button type="submit" class="btn btn-success"><i class="fas fa-cogs mr-1"></i>Generate Tagihan</button>
         </form>
       </div>
     </div>
   </div>
+
+  <%# ===== FILTER & RINGKASAN ===== %>
   <div class="col-lg-6">
-    <div class="card card-primary">
-      <div class="card-header"><h3 class="card-title">Filter & Ringkasan</h3></div>
+    <div class="card card-primary card-outline">
+      <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-filter mr-2"></i>Filter & Ringkasan</h3>
+      </div>
       <div class="card-body">
         <form method="get" action="/admin/tagihan">
           <div class="form-row">
-            <div class="form-group col-md-3">
+            <div class="form-group col-6 col-md-3">
               <label>Bulan</label>
               <input type="number" name="bulan" class="form-control" min="1" max="12" value="<%= bulan %>" required>
             </div>
-            <div class="form-group col-md-3">
+            <div class="form-group col-6 col-md-3">
               <label>Tahun</label>
               <input type="number" name="tahun" class="form-control" min="2000" max="3000" value="<%= tahun %>" required>
             </div>
-            <div class="form-group col-md-3">
+            <div class="form-group col-6 col-md-3">
               <label>Status</label>
               <select name="status" class="form-control">
-                <option value="all" <%= status === 'all' ? 'selected' : '' %>>Semua</option>
-                <option value="belum_bayar" <%= status === 'belum_bayar' ? 'selected' : '' %>>Belum Bayar</option>
-                <option value="lunas" <%= status === 'lunas' ? 'selected' : '' %>>Lunas</option>
+                <option value="all"        <%= status === 'all'        ? 'selected' : '' %>>Semua</option>
+                <option value="belum_bayar" <%= status === 'belum_bayar'? 'selected' : '' %>>Belum Bayar</option>
+                <option value="lunas"       <%= status === 'lunas'      ? 'selected' : '' %>>Lunas</option>
               </select>
             </div>
-            <div class="form-group col-md-3">
+            <div class="form-group col-6 col-md-3">
               <label>Limit</label>
               <input type="number" name="limit" class="form-control" min="10" max="1000" value="<%= limit %>">
             </div>
@@ -63,20 +70,33 @@
           <div class="form-row">
             <div class="form-group col-md-9">
               <label>Cari (meter / nama / WA)</label>
-              <input type="text" name="keyword" class="form-control" value="<%= keyword %>" placeholder="Contoh: 00012 atau Budi atau 0812...">
+              <input type="text" name="keyword" class="form-control" value="<%= keyword %>" placeholder="Contoh: 00012 atau Budi...">
             </div>
             <div class="form-group col-md-3 d-flex align-items-end">
-              <button type="submit" class="btn btn-primary btn-block">Tampilkan</button>
+              <button type="submit" class="btn btn-primary btn-block"><i class="fas fa-search mr-1"></i>Tampilkan</button>
             </div>
           </div>
         </form>
 
-        <div class="alert alert-light border mb-0">
-          <div class="d-flex justify-content-between flex-wrap" style="gap:10px;">
-            <div><strong>Periode:</strong> <%= bulan %>/<%= tahun %></div>
-            <div><strong>Total:</strong> <%= summary.total %></div>
-            <div><strong>Belum:</strong> <%= summary.belum %></div>
-            <div><strong>Lunas:</strong> <%= summary.lunas %></div>
+        <%# Ringkasan statistik %>
+        <div class="row text-center mt-1">
+          <div class="col-4">
+            <div class="border rounded py-2">
+              <div class="h4 mb-0 font-weight-bold"><%= summary.total %></div>
+              <div class="small text-muted">Total</div>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="border rounded py-2 bg-warning-light">
+              <div class="h4 mb-0 font-weight-bold text-warning"><%= summary.belum %></div>
+              <div class="small text-muted">Belum Bayar</div>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="border rounded py-2">
+              <div class="h4 mb-0 font-weight-bold text-success"><%= summary.lunas %></div>
+              <div class="small text-muted">Lunas</div>
+            </div>
           </div>
         </div>
       </div>
@@ -84,17 +104,42 @@
   </div>
 </div>
 
+<%# ===== TABEL DAFTAR TAGIHAN ===== %>
 <div class="card">
-  <div class="card-header"><h3 class="card-title">Daftar Tagihan</h3></div>
+  <div class="card-header d-flex align-items-center justify-content-between flex-wrap">
+    <h3 class="card-title mb-0"><i class="fas fa-list mr-2"></i>Daftar Tagihan &mdash; Periode <strong><%= bulan %>/<%= tahun %></strong></h3>
+    <div class="card-tools d-flex align-items-center" style="gap: 10px;">
+      <% 
+        const unpaidWithWa = bills.filter(b => b.status_bayar === 'belum_bayar' && b.no_whatsapp);
+        if (unpaidWithWa.length > 0) { 
+      %>
+        <button id="btn-broadcast-wa" class="btn btn-sm btn-success">
+          <i class="fab fa-whatsapp mr-1"></i> Broadcast WA Reminder (<%= unpaidWithWa.length %>)
+        </button>
+      <% } %>
+      <span class="badge badge-secondary"><%= bills.length %> data</span>
+    </div>
+  </div>
+  
+  <div id="broadcast-progress-container" class="card-body border-bottom bg-light" style="display: none;">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <strong id="broadcast-status-text">Mengirim Pengingat WhatsApp...</strong>
+      <span id="broadcast-ratio-text" class="badge badge-info">0 / 0</span>
+    </div>
+    <div class="progress progress-sm mb-2">
+      <div id="broadcast-progress-bar" class="progress-bar bg-success progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+    </div>
+    <div class="small text-muted" id="broadcast-log-text">Mohon tunggu, jangan tutup halaman ini.</div>
+  </div>
   <div class="card-body table-responsive p-0">
-    <table class="table table-hover table-striped">
-      <thead>
+    <table class="table table-hover table-striped mb-0">
+      <thead class="thead-light">
         <tr>
           <th>Pelanggan</th>
           <th>Periode</th>
-          <th>Total</th>
+          <th class="text-right">Total</th>
           <th>Status</th>
-          <th>Aksi</th>
+          <th class="text-center">Aksi</th>
         </tr>
       </thead>
       <tbody>
@@ -103,49 +148,52 @@
             <tr>
               <td>
                 <strong><%= item.nama %></strong><br>
-                <small class="text-muted"><%= item.no_meteran %> | WA <%= item.no_whatsapp || '-' %></small>
+                <small class="text-muted">
+                  <i class="fas fa-tachometer-alt mr-1"></i><%= item.no_meteran %>
+                  <% if (item.no_whatsapp) { %>&nbsp;|&nbsp;<i class="fab fa-whatsapp mr-1"></i><%= item.no_whatsapp %><% } %>
+                </small>
               </td>
               <td>
-                <div><strong><%= item.bulan %>/<%= item.tahun %></strong></div>
-                <small class="text-muted">Baca <%= item.bulan_baca %>/<%= item.tahun_baca %></small>
+                <strong><%= item.bulan %>/<%= item.tahun %></strong><br>
+                <small class="text-muted">Baca: <%= item.bulan_baca %>/<%= item.tahun_baca %></small>
               </td>
-              <td><%= helpers.formatCurrency(item.total_tagihan) %></td>
+              <td class="text-right font-weight-bold"><%= helpers.formatCurrency(item.total_tagihan) %></td>
               <td>
-                <span class="badge badge-<%= item.status_bayar === 'lunas' ? 'success' : 'warning' %>"><%= item.status_bayar %></span>
-                <span class="badge badge-<%= item.generated_mode === 'auto' ? 'primary' : 'secondary' %>"><%= item.generated_mode || 'manual' %></span>
+                <span class="badge badge-<%= item.status_bayar === 'lunas' ? 'success' : 'warning' %>">
+                  <%= item.status_bayar === 'lunas' ? '✓ Lunas' : 'Belum Bayar' %>
+                </span>
+                <span class="badge badge-<%= item.generated_mode === 'auto' ? 'primary' : 'secondary' %>">
+                  <%= item.generated_mode || 'manual' %>
+                </span>
                 <% if (item.status_bayar === 'lunas') { %>
                   <div><small class="text-muted"><%= item.tgl_bayar ? helpers.formatDate(item.tgl_bayar) : '-' %> / <%= item.metode_bayar || '-' %></small></div>
-                <% } else { %>
-                  <% if (item.qris_amount_unique) { %>
-                    <div><small class="text-muted">QRIS <%= helpers.formatCurrency(item.qris_amount_unique) %> / kode <%= String(item.qris_unique_code || 0).padStart(3, '0') %></small></div>
-                  <% } %>
+                <% } else if (item.qris_amount_unique) { %>
+                  <div><small class="text-muted">QRIS <%= helpers.formatCurrency(item.qris_amount_unique) %> / kode <%= String(item.qris_unique_code || 0).padStart(3, '0') %></small></div>
                 <% } %>
               </td>
-              <td class="text-nowrap">
-                <div class="d-flex flex-wrap" style="gap:6px;">
-                  <a href="/admin/tagihan/<%= item.id %>" class="btn btn-sm btn-outline-primary">Detail</a>
-                  <a href="/pelanggan/cek?keyword=<%= encodeURIComponent(item.no_meteran) %>" target="_blank" class="btn btn-sm btn-outline-secondary">Invoice</a>
+              <td class="text-center text-nowrap">
+                <div class="d-flex flex-wrap justify-content-center" style="gap:4px;">
+                  <a href="/admin/tagihan/<%= item.id %>" class="btn btn-xs btn-outline-primary" title="Detail">
+                    <i class="fas fa-eye"></i> Detail
+                  </a>
                   <% if (item.status_bayar !== 'lunas') { %>
-                    <form action="/admin/tagihan/<%= item.id %>/lunas" method="post" class="form-inline">
+                    <form action="/admin/tagihan/<%= item.id %>/lunas" method="post" style="display:inline;">
                       <input type="hidden" name="metode_bayar" value="tunai">
-                      <button class="btn btn-sm btn-success" type="submit">Lunaskan</button>
+                      <button class="btn btn-xs btn-success" type="submit" title="Lunaskan"><i class="fas fa-check"></i> Lunas</button>
                     </form>
-                    <form action="/admin/tagihan/<%= item.id %>/qris-assign" method="post" class="form-inline">
-                      <button class="btn btn-sm btn-primary" type="submit"><%= item.qris_amount_unique ? 'QRIS Ulang' : 'QRIS' %></button>
+                    <form action="/admin/tagihan/<%= item.id %>/qris-assign" method="post" style="display:inline;">
+                      <button class="btn btn-xs btn-primary" type="submit"><%= item.qris_amount_unique ? 'QRIS ↻' : 'QRIS' %></button>
                     </form>
                     <% if (item.qris_amount_unique) { %>
-                      <form action="/admin/tagihan/<%= item.id %>/qris-assign?force=1" method="post" class="form-inline">
-                        <button class="btn btn-sm btn-warning" type="submit">Regenerate</button>
-                      </form>
-                      <form action="/admin/tagihan/<%= item.id %>/qris-clear" method="post" class="form-inline">
-                        <button class="btn btn-sm btn-outline-danger" type="submit">Clear</button>
+                      <form action="/admin/tagihan/<%= item.id %>/qris-clear" method="post" style="display:inline;">
+                        <button class="btn btn-xs btn-outline-danger" type="submit" title="Hapus QRIS"><i class="fas fa-times"></i></button>
                       </form>
                     <% } %>
-                    <form action="/admin/tagihan/<%= item.id %>/wa-qris" method="post" class="form-inline">
-                      <button class="btn btn-sm btn-success" type="submit">Kirim WA</button>
+                    <form action="/admin/tagihan/<%= item.id %>/wa-qris" method="post" style="display:inline;">
+                      <button class="btn btn-xs btn-success" type="submit" title="Kirim WA"><i class="fab fa-whatsapp"></i> WA</button>
                     </form>
                   <% } else { %>
-                    <span class="text-success">Selesai</span>
+                    <span class="text-success small"><i class="fas fa-check-circle"></i> Selesai</span>
                   <% } %>
                 </div>
               </td>
@@ -153,12 +201,92 @@
           <% }) %>
         <% } else { %>
           <tr>
-            <td colspan="5" class="text-center text-muted py-4">Tidak ada tagihan pada filter ini.</td>
+            <td colspan="5" class="text-center text-muted py-5">
+              <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+              Tidak ada tagihan pada filter ini.
+            </td>
           </tr>
         <% } %>
       </tbody>
     </table>
   </div>
 </div>
+
+<script id="unpaid-bills-data" type="application/json">
+  <%- JSON.stringify(bills.filter(b => b.status_bayar === 'belum_bayar' && b.no_whatsapp).map(b => ({ id: b.id, nama: b.nama, no_whatsapp: b.no_whatsapp }))) %>
+</script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const btnBroadcast = document.getElementById('btn-broadcast-wa');
+    if (!btnBroadcast) return;
+
+    btnBroadcast.addEventListener('click', async function () {
+      if (!confirm('Apakah Anda yakin ingin mengirim pesan pengingat ke semua tagihan belum lunas pada periode ini?')) {
+        return;
+      }
+
+      const rawData = document.getElementById('unpaid-bills-data').textContent;
+      const queue = JSON.parse(rawData);
+      if (queue.length === 0) {
+        alert('Tidak ada tagihan belum lunas dengan nomor WhatsApp.');
+        return;
+      }
+
+      const container = document.getElementById('broadcast-progress-container');
+      const progressBar = document.getElementById('broadcast-progress-bar');
+      const statusText = document.getElementById('broadcast-status-text');
+      const ratioText = document.getElementById('broadcast-ratio-text');
+      const logText = document.getElementById('broadcast-log-text');
+
+      container.style.display = 'block';
+      btnBroadcast.disabled = true;
+      btnBroadcast.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Memproses...';
+
+      let successCount = 0;
+      let failCount = 0;
+
+      for (let i = 0; i < queue.length; i++) {
+        const item = queue[i];
+        const percent = Math.round((i / queue.length) * 100);
+        
+        progressBar.style.width = percent + '%';
+        statusText.textContent = `Mengirim ke ${item.nama}...`;
+        ratioText.textContent = `${i} / ${queue.length}`;
+        logText.textContent = `Mengirim ke nomor ${item.no_whatsapp}...`;
+
+        try {
+          const response = await fetch(`/admin/whatsapp/send-reminder-single/${item.id}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+          const resJson = await response.json();
+          if (resJson.success) {
+            successCount++;
+          } else {
+            failCount++;
+          }
+        } catch (error) {
+          failCount++;
+        }
+
+        if (i < queue.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 3000));
+        }
+      }
+
+      progressBar.style.width = '100%';
+      statusText.textContent = `Broadcast selesai!`;
+      ratioText.textContent = `${queue.length} / ${queue.length}`;
+      logText.textContent = `Terkirim: ${successCount}, Gagal: ${failCount}. Halaman akan memuat ulang...`;
+
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+    });
+  });
+</script>
 
 <%- include('../partials/admin-footer') %>

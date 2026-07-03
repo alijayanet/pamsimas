@@ -5,6 +5,16 @@
 <script src="/vendor/jquery/dist/jquery.min.js"></script>
 <script src="/vendor/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 <script src="/vendor/admin-lte/dist/js/adminlte.min.js"></script>
+<script>
+  $(document).ready(function() {
+    // Auto dismiss flash alerts after 3.5 seconds
+    setTimeout(function() {
+      $('.alert').fadeTo(500, 0).slideUp(500, function() {
+        $(this).remove();
+      });
+    }, 3500);
+  });
+</script>
 <%- typeof pageScripts !== 'undefined' ? pageScripts : '' %>
 </body>
 </html>

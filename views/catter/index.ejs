@@ -1,31 +1,42 @@
 <%- include('../partials/admin-header', { title, activeMenu: 'catter' }) %>
 
+<div class="alert alert-warning" id="offline-banner" style="display: none;">
+  <i class="fas fa-wifi-slash mr-2"></i> <strong>Anda sedang OFFLINE.</strong> Pencarian pelanggan dan penyimpanan data meteran saat ini menggunakan mode offline (Tunda Sinkronisasi).
+</div>
+
+<div class="alert alert-info d-flex justify-content-between align-items-center flex-wrap" id="sync-container" style="display: none;">
+  <span class="my-1"><i class="fas fa-cloud-upload-alt mr-2"></i> Ada <strong id="sync-pending-count">0</strong> data input meteran yang tertunda sinkronisasi.</span>
+  <button id="btn-sync-now" class="btn btn-sm btn-light font-weight-bold my-1"><i class="fas fa-sync mr-1"></i> Sinkronkan Sekarang</button>
+</div>
+
 <div class="row">
   <div class="col-lg-5">
     <div class="card mobile-card">
       <div class="card-header"><h3 class="card-title">Cari Pelanggan</h3></div>
       <div class="card-body">
-        <form action="/catter" method="get" class="mb-3">
+        <form action="/catter" method="get" class="mb-3" id="search-form">
           <div class="input-group">
-            <input type="text" name="keyword" class="form-control" placeholder="No meter / nama" value="<%= keyword %>">
+            <input type="text" name="keyword" id="search-input" class="form-control" placeholder="No meter / nama" value="<%= keyword %>">
             <div class="input-group-append">
               <button class="btn btn-primary" type="submit">Cari</button>
             </div>
           </div>
         </form>
 
-        <% if (results.length) { %>
-          <div class="list-group">
-            <% results.forEach((item) => { %>
-              <a href="/catter?keyword=<%= encodeURIComponent(keyword) %>&pelanggan_id=<%= item.id %>" class="list-group-item list-group-item-action">
-                <strong><%= item.nama %></strong><br>
-                <small><%= item.no_meteran %> - <%= item.alamat %></small>
-              </a>
-            <% }) %>
-          </div>
-        <% } else if (keyword) { %>
-          <p class="text-muted mb-0">Pelanggan tidak ditemukan.</p>
-        <% } %>
+        <div id="search-results-container">
+          <% if (results.length) { %>
+            <div class="list-group" id="search-results-list">
+              <% results.forEach((item) => { %>
+                <a href="/catter?keyword=<%= encodeURIComponent(keyword) %>&pelanggan_id=<%= item.id %>" class="list-group-item list-group-item-action result-item" data-id="<%= item.id %>" data-nama="<%= item.nama %>" data-meteran="<%= item.no_meteran %>" data-alamat="<%= item.alamat %>" data-whatsapp="<%= item.no_whatsapp || '' %>">
+                  <strong><%= item.nama %></strong><br>
+                  <small><%= item.no_meteran %> - <%= item.alamat %></small>
+                </a>
+              <% }) %>
+            </div>
+          <% } else if (keyword) { %>
+            <p class="text-muted mb-0" id="search-empty-msg">Pelanggan tidak ditemukan.</p>
+          <% } %>
+        </div>
       </div>
     </div>
   </div>
@@ -44,47 +55,62 @@
             Data pemakaian periode ini akan dipakai untuk tagihan bulan berikutnya.
           <% } %>
         </div>
-        <% if (selectedPelanggan) { %>
-          <div class="alert alert-info">
-            <strong><%= selectedPelanggan.nama %></strong><br>
-            No meter: <%= selectedPelanggan.no_meteran %> | WA: <%= selectedPelanggan.no_whatsapp || '-' %>
+        
+        <div id="catter-no-selection" style="<%= selectedPelanggan ? 'display: none;' : '' %>">
+          <p class="text-muted mb-0">Pilih pelanggan dari hasil pencarian untuk mulai input meteran.</p>
+        </div>
+
+        <div id="catter-form-container" style="<%= selectedPelanggan ? '' : 'display: none;' %>">
+          <div class="alert alert-info" id="selected-pelanggan-info">
+            <% if (selectedPelanggan) { %>
+              <strong><span id="info-nama"><%= selectedPelanggan.nama %></span></strong><br>
+              No meter: <span id="info-no-meteran"><%= selectedPelanggan.no_meteran %></span> | WA: <span id="info-no-whatsapp"><%= selectedPelanggan.no_whatsapp || '-' %></span>
+            <% } else { %>
+              <strong><span id="info-nama"></span></strong><br>
+              No meter: <span id="info-no-meteran"></span> | WA: <span id="info-no-whatsapp"></span>
+            <% } %>
           </div>
-          <form action="/catter/meteran" method="post" enctype="multipart/form-data">
-            <input type="hidden" name="pelanggan_id" value="<%= selectedPelanggan.id %>">
+          <form action="/catter/meteran" method="post" enctype="multipart/form-data" id="catter-form">
+            <input type="hidden" name="pelanggan_id" id="form-pelanggan-id" value="<%= selectedPelanggan?.id || '' %>">
             <div class="row">
               <div class="col-md-6 form-group">
                 <label>Bulan</label>
-                <input type="number" name="bulan" class="form-control" value="<%= month %>" min="1" max="12" required>
+                <input type="number" name="bulan" id="form-bulan" class="form-control" value="<%= month %>" min="1" max="12" required>
               </div>
               <div class="col-md-6 form-group">
                 <label>Tahun</label>
-                <input type="number" name="tahun" class="form-control" value="<%= year %>" required>
+                <input type="number" name="tahun" id="form-tahun" class="form-control" value="<%= year %>" required>
               </div>
               <div class="col-md-6 form-group">
                 <label>Meteran Awal</label>
-                <input type="number" name="meteran_awal" class="form-control" value="<%= meteranAwal %>" readonly>
+                <input type="number" name="meteran_awal" id="form-meteran-awal" class="form-control" value="<%= meteranAwal %>" readonly>
               </div>
               <div class="col-md-6 form-group">
                 <label>Meteran Akhir</label>
-                <input type="number" name="meteran_akhir" class="form-control" min="<%= meteranAwal %>" required>
+                <input type="number" name="meteran_akhir" id="form-meteran-akhir" class="form-control" min="<%= meteranAwal %>" required>
               </div>
               <div class="col-md-6 form-group">
                 <label>Status Input</label>
-                <select name="status_input" class="form-control">
+                <select name="status_input" id="form-status-input" class="form-control">
                   <option value="pending">Pending</option>
                   <option value="verified">Verified</option>
                 </select>
               </div>
-              <div class="col-md-6 form-group">
+              <div class="col-md-6 form-group" id="foto-bukti-container">
                 <label>Foto Bukti Meteran</label>
-                <input type="file" name="foto_bukti" accept="image/*" capture="environment" class="form-control-file">
+                <input type="file" name="foto_bukti" id="form-foto-bukti" accept="image/*" capture="environment" class="form-control-file">
+                <small class="text-warning d-block" id="offline-photo-warning" style="display: none;"><i class="fas fa-exclamation-triangle"></i> Foto tidak didukung dalam mode offline.</small>
               </div>
             </div>
-            <button type="submit" class="btn btn-primary btn-block">Simpan Pencatatan</button>
+            
+            <!-- Deteksi Anomali Pemakaian Air (Component 5) -->
+            <div class="alert alert-warning" id="anomaly-warning" style="display: none;">
+              <i class="fas fa-exclamation-triangle mr-1"></i> <span id="anomaly-warning-text"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block" id="btn-submit-reading">Simpan Pencatatan</button>
           </form>
-        <% } else { %>
-          <p class="text-muted mb-0">Pilih pelanggan dari hasil pencarian untuk mulai input meteran.</p>
-        <% } %>
+        </div>
       </div>
     </div>
   </div>
@@ -138,5 +164,340 @@
     </table>
   </div>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const offlineBanner = document.getElementById('offline-banner');
+    const syncContainer = document.getElementById('sync-container');
+    const syncPendingCount = document.getElementById('sync-pending-count');
+    const btnSyncNow = document.getElementById('btn-sync-now');
+    
+    const searchForm = document.getElementById('search-form');
+    const searchInput = document.getElementById('search-input');
+    const searchResultsContainer = document.getElementById('search-results-container');
+    
+    const catterForm = document.getElementById('catter-form');
+    const catterFormContainer = document.getElementById('catter-form-container');
+    const catterNoSelection = document.getElementById('catter-no-selection');
+    
+    const infoNama = document.getElementById('info-nama');
+    const infoNoMeteran = document.getElementById('info-no-meteran');
+    const infoNoWhatsapp = document.getElementById('info-no-whatsapp');
+    
+    const formPelangganId = document.getElementById('form-pelanggan-id');
+    const formMeteranAwal = document.getElementById('form-meteran-awal');
+    const formMeteranAkhir = document.getElementById('form-meteran-akhir');
+    const formBulan = document.getElementById('form-bulan');
+    const formTahun = document.getElementById('form-tahun');
+    const formStatusInput = document.getElementById('form-status-input');
+    const formFotoBukti = document.getElementById('form-foto-bukti');
+    const offlinePhotoWarning = document.getElementById('offline-photo-warning');
+    
+    const anomalyWarning = document.getElementById('anomaly-warning');
+    const anomalyWarningText = document.getElementById('anomaly-warning-text');
+
+    let currentSelectedPelanggan = null;
+    
+    function getPendingQueue() {
+      try {
+        return JSON.parse(localStorage.getItem('catter_pending_queue') || '[]');
+      } catch (e) {
+        return [];
+      }
+    }
+    
+    function savePendingQueue(queue) {
+      localStorage.setItem('catter_pending_queue', JSON.stringify(queue));
+    }
+    
+    function updatePendingUI() {
+      const queue = getPendingQueue();
+      if (queue.length > 0) {
+        syncPendingCount.textContent = queue.length;
+        syncContainer.style.display = 'flex';
+      } else {
+        syncContainer.style.display = 'none';
+      }
+    }
+    
+    function checkConnection() {
+      const isOnline = navigator.onLine;
+      if (isOnline) {
+        offlineBanner.style.display = 'none';
+        if (offlinePhotoWarning) offlinePhotoWarning.style.display = 'none';
+        if (formFotoBukti) formFotoBukti.style.display = 'block';
+        fetchAndCachePelanggan();
+      } else {
+        offlineBanner.style.display = 'block';
+        if (offlinePhotoWarning) offlinePhotoWarning.style.display = 'block';
+        if (formFotoBukti) formFotoBukti.style.display = 'none';
+      }
+      updatePendingUI();
+    }
+    
+    window.addEventListener('online', checkConnection);
+    window.addEventListener('offline', checkConnection);
+    checkConnection();
+    
+    async function fetchAndCachePelanggan() {
+      try {
+        const response = await fetch('/catter/api/pelanggan');
+        const resJson = await response.json();
+        if (resJson.success && resJson.pelanggan) {
+          localStorage.setItem('catter_pelanggan', JSON.stringify(resJson.pelanggan));
+        }
+      } catch (e) {
+        console.warn('Gagal memuat cache pelanggan dari server:', e);
+      }
+    }
+    
+    if (searchForm) {
+      searchForm.addEventListener('submit', function (e) {
+        if (!navigator.onLine) {
+          e.preventDefault();
+          const q = searchInput.value.toLowerCase().trim();
+          if (!q) {
+            searchResultsContainer.innerHTML = '';
+            return;
+          }
+          
+          let cached = [];
+          try {
+            cached = JSON.parse(localStorage.getItem('catter_pelanggan') || '[]');
+          } catch (_) {}
+          
+          const filtered = cached.filter(p => 
+            p.nama.toLowerCase().includes(q) || 
+            p.no_meteran.toLowerCase().includes(q)
+          );
+          
+          if (filtered.length > 0) {
+            let html = '<div class="list-group" id="search-results-list">';
+            filtered.forEach(item => {
+              html += `
+                <a href="#" class="list-group-item list-group-item-action offline-result-item" 
+                   data-id="${item.id}" data-nama="${item.nama}" data-meteran="${item.no_meteran}" 
+                   data-alamat="${item.alamat}" data-whatsapp="${item.no_whatsapp || ''}" data-awal="${item.meteran_awal}" data-avg="${item.avg_usage || ''}">
+                  <strong>${item.nama}</strong><br>
+                  <small>${item.no_meteran} - ${item.alamat}</small>
+                </a>
+              `;
+            });
+            html += '</div>';
+            searchResultsContainer.innerHTML = html;
+            
+            document.querySelectorAll('.offline-result-item').forEach(el => {
+              el.addEventListener('click', function (e) {
+                e.preventDefault();
+                const dataset = this.dataset;
+                selectCustomer({
+                  id: dataset.id,
+                  nama: dataset.nama,
+                  no_meteran: dataset.meteran,
+                  no_whatsapp: dataset.whatsapp,
+                  meteran_awal: parseFloat(dataset.awal || 0),
+                  avg_usage: dataset.avg ? parseFloat(dataset.avg) : null
+                });
+              });
+            });
+          } else {
+            searchResultsContainer.innerHTML = '<p class="text-muted mb-0">Pelanggan tidak ditemukan (offline).</p>';
+          }
+        }
+      });
+    }
+
+    document.querySelectorAll('#search-results-list .result-item').forEach(el => {
+      el.addEventListener('click', function (e) {
+        if (!navigator.onLine) {
+          e.preventDefault();
+          const dataset = this.dataset;
+          let cached = [];
+          try { cached = JSON.parse(localStorage.getItem('catter_pelanggan') || '[]'); } catch (_) {}
+          const match = cached.find(c => String(c.id) === String(dataset.id));
+          selectCustomer({
+            id: dataset.id,
+            nama: dataset.nama,
+            no_meteran: dataset.meteran,
+            no_whatsapp: dataset.whatsapp,
+            meteran_awal: match ? parseFloat(match.meteran_awal || 0) : 0,
+            avg_usage: match ? match.avg_usage : null
+          });
+        }
+      });
+    });
+    
+    function selectCustomer(data) {
+      currentSelectedPelanggan = data;
+      
+      infoNama.textContent = data.nama;
+      infoNoMeteran.textContent = data.no_meteran;
+      infoNoWhatsapp.textContent = data.no_whatsapp || '-';
+      
+      formPelangganId.value = data.id;
+      formMeteranAwal.value = data.meteran_awal;
+      formMeteranAkhir.value = '';
+      formMeteranAkhir.min = data.meteran_awal;
+      
+      catterNoSelection.style.display = 'none';
+      catterFormContainer.style.display = 'block';
+      anomalyWarning.style.display = 'none';
+      
+      formMeteranAkhir.focus();
+    }
+    
+    async function checkAnomaly() {
+      const awal = parseFloat(formMeteranAwal.value || 0);
+      const akhir = parseFloat(formMeteranAkhir.value || 0);
+      if (isNaN(akhir) || akhir <= awal) {
+        anomalyWarning.style.display = 'none';
+        return;
+      }
+      
+      const totalKubik = akhir - awal;
+      let avgUsage = null;
+      
+      if (navigator.onLine) {
+        try {
+          const id = formPelangganId.value;
+          const res = await fetch(`/api/pelanggan/${id}/avg-usage`);
+          const data = await res.json();
+          avgUsage = data.avg_kubik;
+        } catch (e) {}
+      } else if (currentSelectedPelanggan) {
+        avgUsage = currentSelectedPelanggan.avg_usage;
+      }
+      
+      if (avgUsage !== null && avgUsage !== undefined && avgUsage > 0) {
+        const threshold = avgUsage * 3;
+        if (totalKubik > threshold) {
+          anomalyWarningText.textContent = `Perhatian: Pemakaian melonjak tajam (${totalKubik.toLocaleString('id-ID')} m³ vs rata-rata ${avgUsage.toLocaleString('id-ID')} m³). Silakan periksa apakah ada kesalahan input stand meter atau potensi pipa bocor!`;
+          anomalyWarning.style.display = 'block';
+          anomalyWarning.className = 'alert alert-warning';
+        } else {
+          anomalyWarning.style.display = 'none';
+        }
+      } else {
+        anomalyWarning.style.display = 'none';
+      }
+    }
+    
+    if (formMeteranAkhir) {
+      formMeteranAkhir.addEventListener('input', checkAnomaly);
+    }
+    
+    if (catterForm) {
+      catterForm.addEventListener('submit', function (e) {
+        if (!navigator.onLine) {
+          e.preventDefault();
+          const id = formPelangganId.value;
+          const awal = parseFloat(formMeteranAwal.value || 0);
+          const akhir = parseFloat(formMeteranAkhir.value || 0);
+          const bulan = formBulan.value;
+          const tahun = formTahun.value;
+          const status = formStatusInput.value;
+          
+          if (!id) {
+            alert('Silakan pilih pelanggan terlebih dahulu.');
+            return;
+          }
+          if (isNaN(akhir) || akhir < awal) {
+            alert('Meteran akhir tidak boleh lebih kecil dari meteran awal.');
+            return;
+          }
+          
+          const queue = getPendingQueue();
+          const exists = queue.some(item => item.pelanggan_id === id && item.bulan === bulan && item.tahun === tahun);
+          if (exists) {
+            alert('Data pencatatan offline untuk pelanggan ini pada periode tersebut sudah tersimpan di antrean.');
+            return;
+          }
+          
+          queue.push({
+            pelanggan_id: id,
+            nama: infoNama.textContent,
+            no_meteran: infoNoMeteran.textContent,
+            bulan: bulan,
+            tahun: tahun,
+            meteran_awal: awal,
+            meteran_akhir: akhir,
+            status_input: status
+          });
+          
+          savePendingQueue(queue);
+          updatePendingUI();
+          
+          alert(`Pencatatan untuk ${infoNama.textContent} disimpan secara lokal (Tunda Sinkronisasi).`);
+          
+          catterForm.reset();
+          catterFormContainer.style.display = 'none';
+          catterNoSelection.style.display = 'block';
+          currentSelectedPelanggan = null;
+        }
+      });
+    }
+    
+    if (btnSyncNow) {
+      btnSyncNow.addEventListener('click', async function () {
+        if (!navigator.onLine) {
+          alert('Anda masih offline. Pastikan koneksi internet terhubung untuk melakukan sinkronisasi.');
+          return;
+        }
+        
+        const queue = getPendingQueue();
+        if (queue.length === 0) {
+          updatePendingUI();
+          return;
+        }
+        
+        btnSyncNow.disabled = true;
+        btnSyncNow.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Sinkronisasi...';
+        
+        let successCount = 0;
+        let failedQueue = [];
+        
+        for (const item of queue) {
+          try {
+            const params = new URLSearchParams();
+            params.append('pelanggan_id', item.pelanggan_id);
+            params.append('bulan', item.bulan);
+            params.append('tahun', item.tahun);
+            params.append('meteran_awal', item.meteran_awal);
+            params.append('meteran_akhir', item.meteran_akhir);
+            params.append('status_input', item.status_input);
+            
+            const response = await fetch('/catter/meteran', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+              },
+              body: params.toString()
+            });
+            
+            if (response.ok) {
+              successCount++;
+            } else {
+              failedQueue.push(item);
+            }
+          } catch (err) {
+            failedQueue.push(item);
+          }
+        }
+        
+        savePendingQueue(failedQueue);
+        updatePendingUI();
+        
+        alert(`Sinkronisasi selesai! Berhasil disinkronkan: ${successCount} data. Sisa antrean gagal: ${failedQueue.length} data.`);
+        
+        if (failedQueue.length === 0) {
+          window.location.reload();
+        } else {
+          btnSyncNow.disabled = false;
+          btnSyncNow.innerHTML = '<i class="fas fa-sync mr-1"></i> Sinkronkan Sekarang';
+        }
+      });
+    }
+  });
+</script>
 
 <%- include('../partials/admin-footer') %>

@@ -2,6 +2,7 @@ const dayjs = require('dayjs');
 const meterModel = require('../models/meterModel');
 const pengaturanModel = require('../models/pengaturanModel');
 const tagihanModel = require('../models/tagihanModel');
+const tarifGolonganModel = require('../models/tarifGolonganModel');
 const aplikasiModel = require('../models/aplikasiModel');
 const whatsappService = require('./whatsappService');
 const qrisService = require('./qrisService');
@@ -99,10 +100,16 @@ async function generateBillsForReadingPeriod({
 
   for (const reading of readings) {
     try {
+      // Ambil golongan pelanggan untuk tarif yang tepat
+      const golongan = reading.golongan_id
+        ? tarifGolonganModel.getByKode(reading.golongan_id)
+        : null;
+
       const totals = calculateBillTotals({
         totalKubik: reading.total_kubik,
         settings,
-        hasPreviousUnpaid: tagihanModel.hasPreviousUnpaid(reading.pelanggan_id)
+        hasPreviousUnpaid: tagihanModel.hasPreviousUnpaid(reading.pelanggan_id),
+        golongan
       });
 
       const tagihanId = tagihanModel.create({

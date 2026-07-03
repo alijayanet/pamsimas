@@ -1,47 +1,686 @@
-<%- include('../partials/admin-header', { title, activeMenu: 'kasir' }) %>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kwitansi #<%= receipt.id %> - <%= appConfig?.nama_aplikasi || 'PAMSIMAS' %></title>
+  <link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css">
+  <link rel="stylesheet" href="/vendor/admin-lte/dist/css/adminlte.min.css">
+  <link rel="stylesheet" href="/public/css/app.css">
+  <% if (appConfig?.logo_url) { %>
+    <link rel="icon" href="<%= appConfig.logo_url %>">
+  <% } %>
+  <style>
+    /* ============================================================
+       RECEIPT PAGE — TAMPILAN LAYAR
+       ============================================================ */
+    body {
+      background: #f0f2f5;
+      font-family: 'Segoe UI', Arial, sans-serif;
+    }
 
-<div class="row justify-content-center">
-  <div class="col-lg-8">
-    <div class="card invoice-print">
-      <div class="card-body p-4">
-        <div class="d-flex justify-content-between align-items-start mb-4">
-          <div class="d-flex align-items-start">
-            <% if (appConfig?.logo_url) { %>
-              <img src="<%= appConfig.logo_url %>" alt="Logo" class="receipt-logo mr-3">
-            <% } %>
-            <div>
-              <h3 class="mb-1">Kwitansi Pembayaran <%= appConfig?.nama_aplikasi || 'PAMSIMAS' %></h3>
-              <div><%= appConfig?.nama_instansi || 'Unit Pengelola PAMSIMAS' %></div>
-            <% if (appConfig?.alamat_loket) { %>
-              <div class="text-muted"><%= appConfig.alamat_loket %></div>
-            <% } %>
-            <div class="text-muted">No. Kwitansi: <%= receipt.id %></div>
-            </div>
-          </div>
-          <button onclick="window.print()" class="btn btn-outline-primary no-print">Cetak</button>
+    .receipt-page-wrap {
+      max-width: 680px;
+      margin: 28px auto;
+      padding: 0 12px 40px;
+    }
+
+    /* Toolbar aksi di atas invoice (hanya layar) */
+    .receipt-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .receipt-toolbar .printer-options {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.82rem;
+      color: #555;
+    }
+
+    .receipt-toolbar .printer-options button {
+      padding: 4px 10px;
+      font-size: 0.8rem;
+      border-radius: 6px;
+      cursor: pointer;
+      border: 1px solid #ccc;
+      background: #fff;
+      color: #333;
+      transition: all .15s;
+    }
+
+    .receipt-toolbar .printer-options button.active {
+      background: #0d6efd;
+      color: #fff;
+      border-color: #0d6efd;
+    }
+
+    .receipt-toolbar .action-btns {
+      display: flex;
+      gap: 8px;
+    }
+
+    /* ============================================================
+       INVOICE CARD — TAMPILAN LAYAR & PRINT BERSAMA
+       ============================================================ */
+    .inv-card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,.10);
+      overflow: hidden;
+      border: 1px solid #e0e4ea;
+    }
+
+    /* Header berwarna */
+    .inv-header {
+      background: linear-gradient(135deg, #0047ab 0%, #1565c0 60%, #0288d1 100%);
+      color: #fff;
+      padding: 18px 24px 16px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .inv-header-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .inv-logo {
+      width: 52px;
+      height: 52px;
+      object-fit: contain;
+      background: #fff;
+      border-radius: 8px;
+      padding: 4px;
+      flex-shrink: 0;
+    }
+
+    .inv-logo-fallback {
+      width: 52px;
+      height: 52px;
+      background: rgba(255,255,255,.18);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+      flex-shrink: 0;
+    }
+
+    .inv-org-name {
+      font-size: 1rem;
+      font-weight: 700;
+      line-height: 1.2;
+      letter-spacing: .01em;
+    }
+
+    .inv-org-sub {
+      font-size: 0.78rem;
+      opacity: .85;
+      margin-top: 2px;
+      line-height: 1.3;
+    }
+
+    .inv-header-right {
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .inv-title {
+      font-size: 0.7rem;
+      opacity: .75;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      margin-bottom: 2px;
+    }
+
+    .inv-number {
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: .02em;
+    }
+
+    .inv-paid-badge {
+      display: inline-block;
+      background: #22c55e;
+      color: #fff;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 30px;
+      margin-top: 5px;
+    }
+
+    /* Body invoice */
+    .inv-body {
+      padding: 0 24px 20px;
+    }
+
+    /* Blok info pelanggan */
+    .inv-customer-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 0 12px;
+      border-bottom: 1px solid #e8eaf0;
+      flex-wrap: wrap;
+    }
+
+    .inv-customer-col {
+      flex: 1;
+      min-width: 140px;
+    }
+
+    .inv-label {
+      font-size: 0.7rem;
+      color: #8a94a6;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      margin-bottom: 2px;
+      font-weight: 600;
+    }
+
+    .inv-value {
+      font-size: 0.9rem;
+      color: #1a1f2e;
+      font-weight: 600;
+      line-height: 1.3;
+    }
+
+    .inv-value.mono {
+      font-family: 'Courier New', monospace;
+      letter-spacing: .04em;
+    }
+
+    /* Section title dalam body */
+    .inv-section-title {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .09em;
+      color: #6b7280;
+      margin: 14px 0 8px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid #f0f2f5;
+    }
+
+    /* Tabel rincian pemakaian */
+    .inv-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+
+    .inv-table td {
+      padding: 5px 0;
+      vertical-align: top;
+      color: #374151;
+    }
+
+    .inv-table td:last-child {
+      text-align: right;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .inv-table .separator td {
+      border-top: 1px dashed #d1d5db;
+      padding-top: 8px;
+    }
+
+    .inv-table .total-row td {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: #0d6efd;
+      padding-top: 7px;
+    }
+
+    .inv-table .muted-row td {
+      color: #9ca3af;
+      font-size: 0.82rem;
+    }
+
+    /* Meter reading bar */
+    .inv-meter-bar {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin: 10px 0 6px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .inv-meter-cell {
+      flex: 1;
+      padding: 8px 12px;
+      text-align: center;
+    }
+
+    .inv-meter-cell + .inv-meter-cell {
+      border-left: 1px solid #e2e8f0;
+    }
+
+    .inv-meter-cell-label {
+      font-size: 0.65rem;
+      color: #8a94a6;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      font-weight: 600;
+    }
+
+    .inv-meter-cell-val {
+      font-size: 1rem;
+      font-weight: 700;
+      font-family: 'Courier New', monospace;
+      color: #1a1f2e;
+      margin-top: 2px;
+    }
+
+    .inv-meter-arrow {
+      padding: 0 4px;
+      color: #9ca3af;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+    }
+
+    /* Baris total besar di bawah */
+    .inv-total-box {
+      background: #eff6ff;
+      border: 1.5px solid #bfdbfe;
+      border-radius: 10px;
+      padding: 12px 16px;
+      margin-top: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .inv-total-box-label {
+      font-size: 0.78rem;
+      color: #3b82f6;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .inv-total-box-amount {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #1d4ed8;
+    }
+
+    /* Footer meta info (petugas, waktu, metode) */
+    .inv-meta-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid #e8eaf0;
+    }
+
+    .inv-meta-col {
+      flex: 1;
+      min-width: 100px;
+    }
+
+    /* Divider dan footer pesan */
+    .inv-footer-msg {
+      text-align: center;
+      padding: 12px 16px 0;
+      color: #9ca3af;
+      font-size: 0.75rem;
+      line-height: 1.5;
+      border-top: 1px dashed #d1d5db;
+      margin-top: 14px;
+    }
+
+    .inv-footer-msg strong {
+      color: #6b7280;
+    }
+
+    /* Metode bayar badge */
+    .inv-method-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 30px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .inv-method-badge.tunai   { background: #dcfce7; color: #15803d; }
+    .inv-method-badge.transfer{ background: #dbeafe; color: #1d4ed8; }
+    .inv-method-badge.qris    { background: #ede9fe; color: #7c3aed; }
+
+    /* ============================================================
+       PRINT STYLES — override semua tampilan untuk printer
+       ============================================================ */
+    @media print {
+      body {
+        background: #fff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        color: #000 !important;
+      }
+
+      /* Sembunyikan toolbar & semua elemen non-print */
+      .receipt-toolbar,
+      .no-print {
+        display: none !important;
+      }
+
+      .receipt-page-wrap {
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      .inv-card {
+        border: none !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+      }
+
+      /* Header tetap berwarna untuk identitas — gunakan -webkit-print-color-adjust */
+      .inv-header {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        padding: 10px 14px 10px !important;
+      }
+
+      .inv-body {
+        padding: 0 14px 12px !important;
+      }
+
+      .inv-logo { width: 38px !important; height: 38px !important; }
+
+      .inv-org-name { font-size: 0.88rem !important; }
+      .inv-org-sub  { font-size: 0.7rem !important; }
+      .inv-number   { font-size: 0.92rem !important; }
+
+      .inv-table    { font-size: 0.82rem !important; }
+      .inv-table td { padding: 3px 0 !important; }
+
+      .inv-total-box {
+        padding: 8px 12px !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      .inv-total-box-amount { font-size: 1.1rem !important; }
+
+      .inv-meter-bar {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      .inv-footer-msg { font-size: 0.7rem !important; }
+
+      /* Pastikan tidak ada page-break di tengah invoice */
+      .inv-card { page-break-inside: avoid; }
+    }
+
+    /* ===== Thermal 58mm override ===== */
+    @media print {
+      body.thermal-58 .inv-header  { padding: 7px 10px 7px !important; }
+      body.thermal-58 .inv-body    { padding: 0 10px 8px !important; }
+      body.thermal-58 .inv-logo    { width: 30px !important; height: 30px !important; }
+      body.thermal-58 .inv-org-name{ font-size: 0.78rem !important; }
+      body.thermal-58 .inv-number  { font-size: 0.82rem !important; }
+      body.thermal-58 .inv-table   { font-size: 0.75rem !important; }
+      body.thermal-58 .inv-total-box-amount { font-size: 0.95rem !important; }
+      body.thermal-58 .inv-customer-row { gap: 8px !important; }
+      body.thermal-58 .inv-value   { font-size: 0.82rem !important; }
+    }
+
+    /* ===== Thermal 80mm override ===== */
+    @media print {
+      body.thermal-80 .inv-header  { padding: 9px 12px 9px !important; }
+      body.thermal-80 .inv-body    { padding: 0 12px 10px !important; }
+      body.thermal-80 .inv-logo    { width: 36px !important; height: 36px !important; }
+      body.thermal-80 .inv-org-name{ font-size: 0.85rem !important; }
+      body.thermal-80 .inv-table   { font-size: 0.8rem !important; }
+      body.thermal-80 .inv-total-box-amount { font-size: 1rem !important; }
+    }
+  </style>
+</head>
+<body>
+<div class="receipt-page-wrap">
+
+  <%# ===== TOOLBAR (hanya tampil di layar) ===== %>
+  <div class="receipt-toolbar no-print">
+    <div class="action-btns">
+      <a href="/kasir" class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-arrow-left mr-1"></i> Kembali
+      </a>
+    </div>
+    <div class="printer-options">
+      <span>Ukuran:</span>
+      <button id="btn-normal"      onclick="setPrinterSize('normal')">Normal / A4</button>
+      <button id="btn-thermal-80"  onclick="setPrinterSize('thermal-80')">Thermal 80mm</button>
+      <button id="btn-thermal-58"  onclick="setPrinterSize('thermal-58')">Thermal 58mm</button>
+    </div>
+    <button onclick="window.print()" class="btn btn-sm btn-primary">
+      <i class="fas fa-print mr-1"></i> Cetak
+    </button>
+  </div>
+
+  <%# ===== INVOICE CARD ===== %>
+  <div class="inv-card">
+
+    <%# ── HEADER BERWARNA ── %>
+    <div class="inv-header">
+      <div class="inv-header-left">
+        <% if (appConfig?.logo_url) { %>
+          <img src="<%= appConfig.logo_url %>" alt="Logo" class="inv-logo">
+        <% } else { %>
+          <div class="inv-logo-fallback"><i class="fas fa-tint"></i></div>
+        <% } %>
+        <div>
+          <div class="inv-org-name"><%= appConfig?.nama_aplikasi || 'PAMSIMAS' %></div>
+          <div class="inv-org-sub"><%= appConfig?.nama_instansi || 'Unit Pengelola PAMSIMAS' %></div>
+          <% if (appConfig?.alamat_loket) { %>
+            <div class="inv-org-sub"><%= appConfig.alamat_loket %></div>
+          <% } %>
         </div>
-
-        <table class="table table-borderless">
-          <tr><th width="35%">Nama Pelanggan</th><td><%= receipt.nama %></td></tr>
-          <tr><th>No. Meter</th><td><%= receipt.no_meteran %></td></tr>
-          <tr><th>Alamat</th><td><%= receipt.alamat %></td></tr>
-          <tr><th>Periode</th><td><%= receipt.bulan %>/<%= receipt.tahun %></td></tr>
-          <tr><th>Total Tagihan</th><td><strong><%= helpers.formatCurrency(receipt.total_tagihan) %></strong></td></tr>
-          <tr><th>Jumlah Dibayar</th><td><strong><%= helpers.formatCurrency(receipt.jumlah_bayar) %></strong></td></tr>
-          <tr><th>Metode Bayar</th><td><%= receipt.metode_bayar %></td></tr>
-          <tr><th>Petugas Loket</th><td><%= receipt.username %></td></tr>
-          <tr><th>Waktu Bayar</th><td><%= helpers.formatDate(receipt.created_at) %></td></tr>
-          <tr><th>Keterangan</th><td><%= receipt.keterangan || '-' %></td></tr>
-        </table>
-        <% if (appConfig?.no_whatsapp_loket) { %>
-          <p class="mb-1"><strong>Kontak Loket:</strong> <%= appConfig.no_whatsapp_loket %></p>
-        <% } %>
-        <% if (appConfig?.footer_kwitansi) { %>
-          <p class="text-muted mb-0"><%= appConfig.footer_kwitansi %></p>
-        <% } %>
+      </div>
+      <div class="inv-header-right">
+        <div class="inv-title">Bukti Pembayaran</div>
+        <div class="inv-number">#<%= String(receipt.id).padStart(6, '0') %></div>
+        <div class="inv-paid-badge">&#10003; LUNAS</div>
       </div>
     </div>
-  </div>
-</div>
 
-<%- include('../partials/admin-footer') %>
+    <%# ── BODY INVOICE ── %>
+    <div class="inv-body">
+
+      <%# ── INFO PELANGGAN ── %>
+      <div class="inv-customer-row">
+        <div class="inv-customer-col">
+          <div class="inv-label">Nama Pelanggan</div>
+          <div class="inv-value"><%= receipt.nama %></div>
+        </div>
+        <div class="inv-customer-col">
+          <div class="inv-label">No. Meter</div>
+          <div class="inv-value mono"><%= receipt.no_meteran %></div>
+        </div>
+        <div class="inv-customer-col" style="flex:2;">
+          <div class="inv-label">Alamat</div>
+          <div class="inv-value"><%= receipt.alamat || '-' %></div>
+        </div>
+        <div class="inv-customer-col">
+          <div class="inv-label">Periode</div>
+          <div class="inv-value">
+            <%
+              var bulanNames = ['','Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'];
+              var bln = parseInt(receipt.bulan, 10);
+              var bln_label = (bln >= 1 && bln <= 12) ? bulanNames[bln] : receipt.bulan;
+            %>
+            <%= bln_label %> <%= receipt.tahun %>
+          </div>
+        </div>
+      </div>
+
+      <%# ── RINCIAN PEMAKAIAN (meter bar) ── %>
+      <% if (receipt.meteran_awal != null && receipt.meteran_akhir != null) { %>
+        <div class="inv-section-title">Rincian Pemakaian Air</div>
+
+        <div class="inv-meter-bar">
+          <div class="inv-meter-cell">
+            <div class="inv-meter-cell-label">Stand Awal</div>
+            <div class="inv-meter-cell-val"><%= receipt.meteran_awal %></div>
+          </div>
+          <div class="inv-meter-arrow"><i class="fas fa-arrow-right"></i></div>
+          <div class="inv-meter-cell">
+            <div class="inv-meter-cell-label">Stand Akhir</div>
+            <div class="inv-meter-cell-val"><%= receipt.meteran_akhir %></div>
+          </div>
+          <div class="inv-meter-arrow"><i class="fas fa-equals"></i></div>
+          <div class="inv-meter-cell">
+            <div class="inv-meter-cell-label">Pemakaian</div>
+            <div class="inv-meter-cell-val"><%= receipt.total_kubik %> m³</div>
+          </div>
+        </div>
+      <% } %>
+
+      <%# ── RINCIAN TAGIHAN ── %>
+      <div class="inv-section-title">Rincian Tagihan</div>
+
+      <table class="inv-table">
+        <%
+          var kubikDitagihkan = receipt.kubik_ditagihkan || receipt.total_kubik || 0;
+          var hargaPerKubik   = receipt.harga_per_kubik_snapshot || 0;
+          var minKubik        = receipt.minimum_pemakaian_kubik_snapshot || 0;
+          var biayaAir        = kubikDitagihkan * hargaPerKubik;
+          var denda           = receipt.denda || 0;
+        %>
+
+        <% if (minKubik > 0) { %>
+        <tr>
+          <td>Minimum pemakaian</td>
+          <td><%= minKubik %> m³</td>
+        </tr>
+        <% } %>
+
+        <tr>
+          <td>Pemakaian ditagihkan</td>
+          <td><%= kubikDitagihkan %> m³</td>
+        </tr>
+
+        <% if (hargaPerKubik > 0) { %>
+        <tr>
+          <td>Tarif per m³</td>
+          <td><%= helpers.formatCurrency(hargaPerKubik) %></td>
+        </tr>
+        <tr>
+          <td>Biaya pemakaian air</td>
+          <td><%= helpers.formatCurrency(biayaAir) %></td>
+        </tr>
+        <% } %>
+
+        <% if (denda > 0) { %>
+        <tr>
+          <td>Denda keterlambatan</td>
+          <td style="color:#ef4444;"><%= helpers.formatCurrency(denda) %></td>
+        </tr>
+        <% } %>
+
+        <tr class="separator">
+          <td></td><td></td>
+        </tr>
+        <tr class="total-row">
+          <td>Total Tagihan</td>
+          <td><%= helpers.formatCurrency(receipt.total_tagihan) %></td>
+        </tr>
+      </table>
+
+      <%# ── KOTAK TOTAL BESAR ── %>
+      <div class="inv-total-box">
+        <div class="inv-total-box-label">Jumlah Dibayar</div>
+        <div class="inv-total-box-amount"><%= helpers.formatCurrency(receipt.jumlah_bayar) %></div>
+      </div>
+
+      <%# ── META: METODE, PETUGAS, WAKTU ── %>
+      <div class="inv-meta-row">
+        <div class="inv-meta-col">
+          <div class="inv-label">Metode Bayar</div>
+          <span class="inv-method-badge <%= receipt.metode_bayar %>">
+            <%= receipt.metode_bayar %>
+          </span>
+        </div>
+        <div class="inv-meta-col">
+          <div class="inv-label">Petugas Loket</div>
+          <div class="inv-value" style="font-size:0.85rem;"><%= receipt.username %></div>
+        </div>
+        <div class="inv-meta-col">
+          <div class="inv-label">Waktu Pembayaran</div>
+          <div class="inv-value" style="font-size:0.82rem;font-weight:500;"><%= helpers.formatDate(receipt.created_at) %></div>
+        </div>
+        <% if (receipt.keterangan) { %>
+        <div class="inv-meta-col" style="flex:2;">
+          <div class="inv-label">Keterangan</div>
+          <div class="inv-value" style="font-size:0.85rem;font-weight:400;"><%= receipt.keterangan %></div>
+        </div>
+        <% } %>
+      </div>
+
+      <%# ── FOOTER PESAN ── %>
+      <div class="inv-footer-msg">
+        <% if (appConfig?.no_whatsapp_loket) { %>
+          <div>Pertanyaan? Hubungi loket: <strong><%= appConfig.no_whatsapp_loket %></strong></div>
+        <% } %>
+        <% if (appConfig?.footer_kwitansi) { %>
+          <div><%= appConfig.footer_kwitansi %></div>
+        <% } %>
+        <div style="margin-top:4px;">Dokumen ini merupakan bukti pembayaran yang sah &bull; <%= appConfig?.nama_aplikasi || 'PAMSIMAS' %></div>
+      </div>
+
+    </div><%# end inv-body %>
+  </div><%# end inv-card %>
+</div><%# end receipt-page-wrap %>
+
+<script>
+  // ===== PILIHAN UKURAN PRINTER THERMAL =====
+  var printerClasses = ['thermal-58', 'thermal-80'];
+
+  function setPrinterSize(size) {
+    printerClasses.forEach(function(c) { document.body.classList.remove(c); });
+    ['btn-normal', 'btn-thermal-80', 'btn-thermal-58'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.classList.remove('active');
+    });
+
+    var activeId = 'btn-normal';
+    if (size === 'thermal-58')      { document.body.classList.add('thermal-58');  activeId = 'btn-thermal-58'; }
+    else if (size === 'thermal-80') { document.body.classList.add('thermal-80');  activeId = 'btn-thermal-80'; }
+
+    var el = document.getElementById(activeId);
+    if (el) el.classList.add('active');
+
+    localStorage.setItem('pamsimas_printer_size', size);
+  }
+
+  (function() {
+    var saved = localStorage.getItem('pamsimas_printer_size') || 'normal';
+    setPrinterSize(saved);
+  })();
+</script>
+</body>
+</html>

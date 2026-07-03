@@ -63,6 +63,22 @@ function initSchema() {
       updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
 
+    CREATE TABLE IF NOT EXISTS tarif_golongan (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      kode_golongan TEXT NOT NULL UNIQUE CHECK (kode_golongan IN ('rumah_tangga', 'sosial', 'niaga')),
+      nama_golongan TEXT NOT NULL,
+      biaya_admin REAL NOT NULL DEFAULT 0,
+      minimum_pemakaian REAL NOT NULL DEFAULT 5,
+      is_progresif INTEGER NOT NULL DEFAULT 1 CHECK (is_progresif IN (0, 1)),
+      harga_blok_1 REAL NOT NULL DEFAULT 0,
+      batas_blok_1 REAL NOT NULL DEFAULT 10,
+      harga_blok_2 REAL NOT NULL DEFAULT 0,
+      batas_blok_2 REAL NOT NULL DEFAULT 20,
+      harga_blok_3 REAL NOT NULL DEFAULT 0,
+      harga_flat REAL NOT NULL DEFAULT 0,
+      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+
     CREATE TABLE IF NOT EXISTS pelanggan (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       no_meteran TEXT NOT NULL UNIQUE,
@@ -71,7 +87,9 @@ function initSchema() {
       no_whatsapp TEXT,
       tgl_bergabung TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
       user_id INTEGER,
-      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+      golongan_id TEXT NOT NULL DEFAULT 'rumah_tangga',
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+      FOREIGN KEY (golongan_id) REFERENCES tarif_golongan(kode_golongan) ON DELETE RESTRICT
     );
 
     CREATE TABLE IF NOT EXISTS pencatatan_meteran (
@@ -262,6 +280,26 @@ function initSchema() {
       1,
       'Yth. {{nama}},\n\nTagihan air periode {{periode}} sudah terbit.\nNo. Meter: {{no_meter}}\nTotal: Rp{{total}}\n\nKode bayar QRIS: {{qris_nominal}} (kode {{qris_kode}})\nSilakan scan QRIS berikut untuk pembayaran otomatis.\n\nCek detail: {{link}}'
     );
+  }
+
+  // Migrasi: tambah kolom golongan_id pada pelanggan (pelanggan lama)
+  try { db.exec("ALTER TABLE pelanggan ADD COLUMN golongan_id TEXT NOT NULL DEFAULT 'rumah_tangga'"); } catch (e) {}
+
+  // Seed data tarif_golongan jika belum ada
+  const golonganCount = db.prepare('SELECT COUNT(*) AS total FROM tarif_golongan').get();
+  if (!golonganCount.total) {
+    const insertGolongan = db.prepare(`
+      INSERT INTO tarif_golongan (
+        kode_golongan, nama_golongan, biaya_admin, minimum_pemakaian,
+        is_progresif, harga_blok_1, batas_blok_1, harga_blok_2, batas_blok_2, harga_blok_3, harga_flat
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    // Rumah Tangga: progresif
+    insertGolongan.run('rumah_tangga', 'Rumah Tangga', 5000, 5, 1, 3000, 10, 4000, 20, 5000, 0);
+    // Sosial (Masjid/Sosial): flat
+    insertGolongan.run('sosial', 'Sosial / Umum', 2000, 5, 0, 0, 10, 0, 20, 0, 1500);
+    // Niaga: progresif
+    insertGolongan.run('niaga', 'Niaga / Usaha', 10000, 5, 1, 4500, 10, 6000, 20, 7500, 0);
   }
 }
 

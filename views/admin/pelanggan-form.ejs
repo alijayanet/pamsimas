@@ -20,6 +20,14 @@
           <label>Tanggal Bergabung</label>
           <input type="date" name="tgl_bergabung" class="form-control" value="<%= pelanggan?.tgl_bergabung ? pelanggan.tgl_bergabung.slice(0, 10) : '' %>">
         </div>
+        <div class="col-md-6 form-group">
+          <label>Golongan Pelanggan</label>
+          <select name="golongan_id" class="form-control" required>
+            <% (golonganList || []).forEach(g => { %>
+              <option value="<%= g.kode_golongan %>" <%= (pelanggan?.golongan_id === g.kode_golongan) ? 'selected' : '' %>><%= g.nama_golongan %></option>
+            <% }) %>
+          </select>
+        </div>
         <div class="col-12 form-group">
           <label>Alamat</label>
           <textarea name="alamat" class="form-control" rows="3" required><%= pelanggan?.alamat || '' %></textarea>
