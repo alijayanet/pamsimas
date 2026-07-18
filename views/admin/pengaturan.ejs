@@ -135,9 +135,71 @@
           </div>
           <div class="form-group">
             <label>Token Webhook Macrodroid</label>
-            <input type="text" name="qris_webhook_token" class="form-control" value="<%= appConfig.qris_webhook_token || '' %>" placeholder="Isi token acak (wajib jika ingin auto-konfirmasi)">
-            <small class="text-muted">Endpoint: <span class="font-weight-bold"><%= (appConfig?.resolved_base_url || '') %>/api/qris/macrodroid</span> (Header: <span class="font-weight-bold">X-Webhook-Token</span>)</small>
+            <div class="input-group">
+              <input type="text" name="qris_webhook_token" id="input-webhook-token" class="form-control" value="<%= appConfig.qris_webhook_token || '' %>" placeholder="Isi token acak, contoh: pamsimas2024secret">
+              <div class="input-group-append">
+                <button type="button" class="btn btn-outline-secondary" onclick="generateWebhookToken()"><i class="fas fa-random"></i> Generate</button>
+              </div>
+            </div>
+            <small class="text-muted">Token wajib diisi agar webhook tidak bisa diakses sembarang orang.</small>
           </div>
+
+          <% if (appConfig.qris_webhook_token) { %>
+          <div class="card card-light card-outline border mb-3">
+            <div class="card-header py-2">
+              <h6 class="card-title mb-0 text-info"><i class="fas fa-link mr-1"></i> URL Webhook Siap Pakai (Copy ke Macrodroid)</h6>
+            </div>
+            <div class="card-body py-2">
+              <p class="mb-1 small text-muted">Pilih salah satu format. Keduanya berfungsi sama:</p>
+
+              <label class="small font-weight-bold">① URL dengan Token di Query String <span class="badge badge-success badge-sm">Lebih mudah</span></label>
+              <div class="input-group input-group-sm mb-2">
+                <input type="text" id="url-query-token" class="form-control font-monospace" readonly
+                  value="<%= (appConfig.resolved_base_url || '') %>/api/qris/macrodroid?token=<%= encodeURIComponent(appConfig.qris_webhook_token) %>">
+                <div class="input-group-append">
+                  <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('url-query-token')"><i class="fas fa-copy"></i></button>
+                </div>
+              </div>
+
+              <label class="small font-weight-bold">② URL dengan Header <code>X-Webhook-Token</code> <span class="badge badge-secondary badge-sm">Perlu set header manual</span></label>
+              <div class="input-group input-group-sm mb-2">
+                <input type="text" id="url-header-token" class="form-control font-monospace" readonly
+                  value="<%= (appConfig.resolved_base_url || '') %>/api/qris/macrodroid">
+                <div class="input-group-append">
+                  <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('url-header-token')"><i class="fas fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="mt-2">
+                <a data-toggle="collapse" href="#macrodroid-guide" class="small"><i class="fas fa-question-circle mr-1"></i>Cara setting di Macrodroid</a>
+                <div class="collapse mt-2" id="macrodroid-guide">
+                  <div class="card card-body bg-light py-2 px-3 small">
+                    <p class="mb-1 font-weight-bold">Menggunakan URL ① (Lebih Mudah):</p>
+                    <ol class="mb-2 pl-3">
+                      <li>Di Macrodroid, buat Action → <strong>HTTP Request</strong></li>
+                      <li>Method: <strong>POST</strong></li>
+                      <li>URL: paste URL ① di atas (token sudah ada di URL)</li>
+                      <li>Body: isi variabel notifikasi WhatsApp, contoh:<br>
+                        <code class="d-block mt-1 p-1 bg-white border rounded">text=[notification_text]&amount=[notification_amount]</code>
+                      </li>
+                      <li>Content-Type: <code>application/x-www-form-urlencoded</code></li>
+                    </ol>
+                    <p class="mb-1 font-weight-bold">Menggunakan URL ② (Perlu Header):</p>
+                    <ol class="mb-0 pl-3">
+                      <li>URL: paste URL ② di atas</li>
+                      <li>Tambah header: <code>X-Webhook-Token: <%= appConfig.qris_webhook_token %></code></li>
+                    </ol>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <% } else { %>
+          <div class="alert alert-warning py-2 small">
+            <i class="fas fa-exclamation-triangle mr-1"></i> Isi token terlebih dahulu lalu simpan untuk melihat URL webhook siap pakai.
+          </div>
+          <% } %>
+
           <div class="form-group">
             <label>Window Pencocokan (menit)</label>
             <input type="number" name="qris_match_window_minutes" class="form-control" value="<%= appConfig.qris_match_window_minutes || 1440 %>" min="5" max="10080">
@@ -432,5 +494,55 @@
     </table>
   </div>
 </div>
+
+<script>
+  function generateWebhookToken() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let token = '';
+    for (let i = 0; i < 32; i++) {
+      token += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    const input = document.getElementById('input-webhook-token');
+    if (input) {
+      input.value = token;
+      input.focus();
+      // Highlight the field briefly
+      input.style.border = '2px solid #28a745';
+      setTimeout(() => { input.style.border = ''; }, 1500);
+    }
+  }
+
+  function copyToClipboard(elementId) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    el.select();
+    el.setSelectionRange(0, 99999);
+    try {
+      navigator.clipboard.writeText(el.value).then(() => {
+        showCopyToast('Berhasil disalin ke clipboard!');
+      }).catch(() => {
+        document.execCommand('copy');
+        showCopyToast('Berhasil disalin!');
+      });
+    } catch (e) {
+      document.execCommand('copy');
+      showCopyToast('Berhasil disalin!');
+    }
+  }
+
+  function showCopyToast(msg) {
+    let toast = document.getElementById('copy-toast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'copy-toast';
+      toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#28a745;color:#fff;padding:10px 20px;border-radius:6px;z-index:9999;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,0.2);transition:opacity 0.3s;';
+      document.body.appendChild(toast);
+    }
+    toast.textContent = '✅ ' + msg;
+    toast.style.opacity = '1';
+    clearTimeout(window._copyToastTimer);
+    window._copyToastTimer = setTimeout(() => { toast.style.opacity = '0'; }, 2000);
+  }
+</script>
 
 <%- include('../partials/admin-footer') %>

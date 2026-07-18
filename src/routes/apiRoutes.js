@@ -3,9 +3,18 @@ const qrisWebhookController = require('../controllers/qrisWebhookController');
 const qrisStaticController = require('../controllers/qrisStaticController');
 const db = require('../config/database');
 
+// Inject token dari query param ke header agar Macrodroid bisa kirim lewat URL (?token=xxx)
+function injectTokenFromQuery(req, res, next) {
+  if (!req.headers['x-webhook-token']) {
+    const t = String(req.query?.token || req.query?.secret_key || req.body?.token || '').trim();
+    if (t) req.headers['x-webhook-token'] = t;
+  }
+  next();
+}
+
 const router = express.Router();
 
-router.post('/qris/macrodroid', qrisWebhookController.handleMacrodroid);
+router.post('/qris/macrodroid', injectTokenFromQuery, qrisWebhookController.handleMacrodroid);
 router.get('/qris/static.jpg', qrisStaticController.getStaticQrisJpg);
 
 router.post('/webhook/v1/payment-notif', (req, res) => {
