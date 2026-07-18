@@ -59,11 +59,12 @@
             <li class="nav-item"><a href="/admin/tagihan" class="nav-link <%= activeMenu === 'tagihan' ? 'active' : '' %>"><i class="nav-icon fas fa-file-invoice"></i><p>Tagihan</p></a></li>
             <li class="nav-item"><a href="/admin/pelanggan" class="nav-link <%= activeMenu === 'pelanggan' ? 'active' : '' %>"><i class="nav-icon fas fa-users"></i><p>Pelanggan</p></a></li>
             <li class="nav-item"><a href="/admin/petugas" class="nav-link <%= activeMenu === 'petugas' ? 'active' : '' %>"><i class="nav-icon fas fa-user-cog"></i><p>Petugas</p></a></li>
-            <li class="nav-item"><a href="/admin/pengaturan" class="nav-link <%= activeMenu === 'pengaturan' ? 'active' : '' %>"><i class="nav-icon fas fa-cog"></i><p>Tarif & Keuangan</p></a></li>
-            <li class="nav-item"><a href="/admin/tarif-golongan" class="nav-link <%= activeMenu === 'tarif-golongan' ? 'active' : '' %>"><i class="nav-icon fas fa-sliders-h"></i><p>Tarif Golongan</p></a></li>
             <li class="nav-item"><a href="/kasir" class="nav-link <%= activeMenu === 'kasir' ? 'active' : '' %>"><i class="nav-icon fas fa-cash-register"></i><p>Kasir / Loket</p></a></li>
             <li class="nav-item"><a href="/admin/whatsapp" class="nav-link <%= activeMenu === 'whatsapp' ? 'active' : '' %>"><i class="nav-icon fab fa-whatsapp"></i><p>WhatsApp</p></a></li>
+            <li class="nav-item"><a href="/admin/keuangan" class="nav-link <%= activeMenu === 'keuangan' ? 'active' : '' %>"><i class="nav-icon fas fa-money-bill-wave"></i><p>Keuangan</p></a></li>
+            <li class="nav-item"><a href="/admin/tarif-golongan" class="nav-link <%= activeMenu === 'tarif-golongan' ? 'active' : '' %>"><i class="nav-icon fas fa-sliders-h"></i><p>Tarif Golongan</p></a></li>
             <li class="nav-divider mt-3"></li>
+            <li class="nav-item"><a href="/admin/pengaturan" class="nav-link <%= activeMenu === 'pengaturan' ? 'active' : '' %>"><i class="nav-icon fas fa-cog"></i><p>Pengaturan</p></a></li>
             <li class="nav-item"><a href="/admin/change-password" class="nav-link <%= activeMenu === 'change-password' ? 'active' : '' %>"><i class="nav-icon fas fa-key"></i><p>Ubah Password</p></a></li>
           <% } %>
           <% if (currentUser && (currentUser.role === 'catter' || currentUser.role === 'admin')) { %>

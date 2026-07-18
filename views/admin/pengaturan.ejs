@@ -272,134 +272,20 @@
     </div>
   </div>
   <div class="col-lg-6">
-    <div class="card card-success">
-      <div class="card-header"><h3 class="card-title">Generate Tagihan Manual</h3></div>
-      <div class="card-body">
-        <form action="/admin/tagihan/generate" method="post">
-          <input type="hidden" name="redirect_to" value="/admin/pengaturan">
-          <div class="form-row">
-            <div class="form-group col-md-6">
-              <label>Bulan Pencatatan</label>
-              <input type="number" name="source_month" class="form-control" min="1" max="12" value="<%= generationDefaults.sourcePeriod.bulan %>" required>
-            </div>
-            <div class="form-group col-md-6">
-              <label>Tahun Pencatatan</label>
-              <input type="number" name="source_year" class="form-control" min="2000" max="3000" value="<%= generationDefaults.sourcePeriod.tahun %>" required>
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group col-md-6">
-              <label>Bulan Tagihan</label>
-              <input type="number" name="billing_month" class="form-control" min="1" max="12" value="<%= generationDefaults.billingPeriod.bulan %>" required>
-            </div>
-            <div class="form-group col-md-6">
-              <label>Tahun Tagihan</label>
-              <input type="number" name="billing_year" class="form-control" min="2000" max="3000" value="<%= generationDefaults.billingPeriod.tahun %>" required>
-            </div>
-          </div>
-          <div class="alert alert-light border">
-            <div><strong>Default saat ini:</strong> baca <%= generationDefaults.sourcePeriod.bulan %>/<%= generationDefaults.sourcePeriod.tahun %> menjadi tagihan <%= generationDefaults.billingPeriod.bulan %>/<%= generationDefaults.billingPeriod.tahun %>.</div>
-            <div><strong>Opsi berikutnya:</strong> <%= generationDefaults.nextPeriod.bulan %>/<%= generationDefaults.nextPeriod.tahun %></div>
-          </div>
-          <button type="submit" class="btn btn-success">Generate Tagihan Manual</button>
-        </form>
+    <div class="card card-outline card-success">
+      <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-money-bill-wave mr-2"></i>Manajemen Keuangan</h3>
       </div>
-    </div>
-  </div>
-  <div class="col-lg-6">
-    <div class="card card-danger">
-      <div class="card-header"><h3 class="card-title">Input Pengeluaran</h3></div>
       <div class="card-body">
-        <form action="/admin/pengeluaran" method="post">
-          <div class="form-group">
-            <label>Tanggal</label>
-            <input type="date" name="tanggal" class="form-control">
-          </div>
-          <div class="form-group">
-            <label>Jumlah</label>
-            <input type="number" name="jumlah" class="form-control" required>
-          </div>
-          <div class="form-group">
-            <label>Keterangan</label>
-            <textarea name="keterangan" class="form-control" rows="3" required></textarea>
-          </div>
-          <button type="submit" class="btn btn-danger">Catat Pengeluaran</button>
-        </form>
+        <p class="text-muted">Input pengeluaran, lihat riwayat mutasi keuangan, dan unduh laporan CSV kini tersedia di halaman Keuangan.</p>
+        <a href="/admin/keuangan" class="btn btn-success btn-block">
+          <i class="fas fa-arrow-right mr-1"></i> Buka Halaman Keuangan
+        </a>
       </div>
     </div>
   </div>
 </div>
 
-<div class="card">
-  <div class="card-header"><h3 class="card-title">Riwayat Keuangan</h3></div>
-  <div class="card-body table-responsive p-0">
-    <table class="table table-striped">
-      <thead>
-        <tr>
-          <th>Tanggal</th>
-          <th>Tipe</th>
-          <th>Keterangan</th>
-          <th>Jumlah</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% financeEntries.forEach((item) => { %>
-          <tr>
-            <td><%= helpers.formatDate(item.tanggal) %></td>
-            <td><span class="badge badge-<%= item.tipe === 'pemasukan' ? 'success' : 'danger' %>"><%= item.tipe %></span></td>
-            <td><%= item.keterangan %></td>
-            <td><%= helpers.formatCurrency(item.jumlah) %></td>
-          </tr>
-        <% }) %>
-      </tbody>
-    </table>
-  </div>
-</div>
-
-<div class="card mt-3 card-info card-outline">
-  <div class="card-header">
-    <h3 class="card-title"><i class="fas fa-file-csv mr-2"></i>Unduh Laporan CSV</h3>
-  </div>
-  <div class="card-body">
-    <form action="/admin/laporan/export-csv" method="get">
-      <div class="row align-items-end">
-        <div class="col-md-3 form-group">
-          <label>Jenis Laporan</label>
-          <select name="jenis" id="pengaturan-export-jenis" class="form-control" required>
-            <option value="bku">Buku Kas Umum (BKU)</option>
-            <option value="rekap_pemakaian">Rekap Pemakaian Pelanggan</option>
-            <option value="tunggakan">Daftar Tunggakan</option>
-          </select>
-        </div>
-        <div class="col-md-2 form-group peng-filter-tanggal">
-          <label>Dari Tanggal</label>
-          <input type="date" name="dari" class="form-control" id="peng-export-dari">
-        </div>
-        <div class="col-md-2 form-group peng-filter-tanggal">
-          <label>Sampai Tanggal</label>
-          <input type="date" name="sampai" class="form-control" id="peng-export-sampai">
-        </div>
-        <div class="col-md-2 form-group peng-filter-periode" style="display:none;">
-          <label>Bulan</label>
-          <select name="bulan" class="form-control">
-            <% for(let m=1; m<=12; m++) { %>
-              <option value="<%= m %>" <%= m === (new Date().getMonth() + 1) ? 'selected' : '' %>><%= m %></option>
-            <% } %>
-          </select>
-        </div>
-        <div class="col-md-2 form-group peng-filter-periode" style="display:none;">
-          <label>Tahun</label>
-          <input type="number" name="tahun" class="form-control" value="<%= new Date().getFullYear() %>" min="2000" max="3000">
-        </div>
-        <div class="col-md-3 form-group">
-          <button type="submit" class="btn btn-info btn-block">
-            <i class="fas fa-download mr-1"></i> Download CSV
-          </button>
-        </div>
-      </div>
-    </form>
-  </div>
-</div>
 
 <script>
   (function() {

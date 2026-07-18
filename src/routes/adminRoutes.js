@@ -38,8 +38,11 @@ router.post(
 router.post('/tagihan/:id/qris-assign', adminController.assignQrisCode);
 router.post('/tagihan/:id/qris-clear', adminController.clearQrisCode);
 router.post('/qris-log/:id/retry', adminController.retryQrisLog);
-router.post('/pengeluaran', adminController.addExpense);
 router.post('/tagihan/:id/lunas', adminController.markBillPaid);
+
+// Keuangan
+router.get('/keuangan', adminController.showKeuangan);
+router.post('/pengeluaran', adminController.addExpense);
 
 router.get('/whatsapp', adminController.showWhatsapp);
 router.post('/whatsapp/connect', adminController.reconnectWhatsapp);

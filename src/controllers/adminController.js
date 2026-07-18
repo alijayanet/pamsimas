@@ -561,6 +561,30 @@ function updateAppConfig(req, res) {
   return res.redirect('/admin/pengaturan');
 }
 
+function showKeuangan(req, res) {
+  const bulan = Number(req.query.bulan || (dayjs().month() + 1));
+  const tahun = Number(req.query.tahun || dayjs().year());
+  const dari = req.query.dari || '';
+  const sampai = req.query.sampai || '';
+
+  let entries;
+  if (dari && sampai) {
+    entries = keuanganModel.listAll ? keuanganModel.listAll({ dari, sampai }) : keuanganModel.getLatest(500);
+  } else {
+    entries = keuanganModel.listAll ? keuanganModel.listAll({}) : keuanganModel.getLatest(500);
+  }
+
+  return res.render('admin/keuangan', {
+    title: 'Manajemen Keuangan',
+    activeMenu: 'keuangan',
+    entries,
+    bulan,
+    tahun,
+    dari,
+    sampai
+  });
+}
+
 function addExpense(req, res) {
   keuanganModel.createEntry({
     tipe: 'pengeluaran',
@@ -570,7 +594,8 @@ function addExpense(req, res) {
   });
 
   req.flash('success', 'Pengeluaran berhasil dicatat.');
-  return res.redirect('/admin/pengaturan');
+  const redirectTo = req.body.redirect_to || '/admin/keuangan';
+  return res.redirect(redirectTo.startsWith('/admin') ? redirectTo : '/admin/keuangan');
 }
 
 async function markBillPaid(req, res) {
@@ -917,6 +942,7 @@ module.exports = {
   sendQrisReminderBulk,
   testQrisWhatsapp,
   // Fitur Baru
+  showKeuangan,
   showTarifGolongan,
   updateTarifGolongan,
   broadcastReminderTunggakan,
